@@ -34,6 +34,27 @@
 #include "esp_wifi.h"
 #include "esp_bt.h"
 
+// Forward Declarations for standard C++ compilation
+void initPwmHardware();
+void setHardwarePwmDuty(uint32_t duty);
+void updateHardwareFade();
+void loadSettingsFromNVS();
+void saveStateToNVS();
+void setupWiFi();
+void checkWiFiConnection();
+void handleRoot();
+void handleApiState();
+void handleApiPower();
+void handleApiBrightness();
+void handleApiSoftness();
+void handleApiFrequency();
+void handleApiCurve();
+void handleApiTimer();
+void handleApiSettings();
+void handleApiReboot();
+void handleApiSerialLogs();
+uint32_t calculatePhysicalDuty(uint8_t percent);
+
 // -------------------------------------------------------------
 // Pin & LEDC Configuration
 // -------------------------------------------------------------
@@ -747,7 +768,7 @@ input[type=range]::-webkit-slider-thumb{width:32px;height:32px;-webkit-appearanc
 </div>
 <script>
 let curState={power:false,brightness:75,softness:400,frequency:5000};
-function fetchState(){
+const fetchState = () => {
   fetch('/api/state').then(r=>r.json()).then(d=>{
     curState=d;
     document.getElementById('pwrBtn').className='power-btn '+(d.power?'active':'');
@@ -757,36 +778,36 @@ function fetchState(){
     document.getElementById('sSlider').value=d.softness;
     document.getElementById('fVal').innerText=d.frequency+' Hz';
   }).catch(()=>{});
-}
-function togglePower(){
+};
+const togglePower = () => {
   fetch('/api/power',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({power:!curState.power})}).then(fetchState);
-}
+};
 let bTimer;
-function onBright(v){
+const onBright = (v) => {
   v=Math.max(1,Math.min(100,parseInt(v)));
   document.getElementById('bVal').innerText=v+'%';
   clearTimeout(bTimer);
   bTimer=setTimeout(()=>{
     fetch('/api/brightness',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({brightness:v})});
   },60);
-}
-function setBright(v){
+};
+const setBright = (v) => {
   document.getElementById('bSlider').value=v;
   onBright(v);
-}
+};
 let sTimer;
-function onSoft(v){
+const onSoft = (v) => {
   v=Math.max(0,Math.min(3000,parseInt(v)));
   document.getElementById('sVal').innerText=v+'ms';
   clearTimeout(sTimer);
   sTimer=setTimeout(()=>{
     fetch('/api/softness',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({softness:v})});
   },80);
-}
-function setFreq(v){
+};
+const setFreq = (v) => {
   document.getElementById('fVal').innerText=v+' Hz';
   fetch('/api/frequency',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({frequency:v})}).then(fetchState);
-}
+};
 fetchState();
 setInterval(fetchState,2000);
 </script>
