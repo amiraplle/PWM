@@ -370,21 +370,64 @@ void processTimerLoop() {
 // Wi-Fi Connection & Robust Reconnect
 // -------------------------------------------------------------
 void connectWiFi() {
-  WiFi.disconnect();
-  delay(10);
+  // If credentials are saved, attempt Station mode connection first
+  if (strlen(state.wifiSsid) > 0) {
+    Serial.printf("\n[WIFI] Found configured SSID: '%s'\n", state.wifiSsid);
+    Serial.println("[WIFI] Connecting to Wi-Fi Network...");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(state.wifiSsid, state.wifiPass);
 
-  // Disable all sleep & power savings for 24/7 responsiveness
+    unsigned long startAttempt = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 9000) {
+      delay(300);
+      Serial.print(".");
+    }
+    Serial.println();
+
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println("[WIFI] >>> SUCCESS: Connected to Home Wi-Fi! <<<");
+      Serial.print  ("[WIFI] IP Address: "); Serial.println(WiFi.localIP());
+      Serial.print  ("[WIFI] Web UI:     http://"); Serial.println(WiFi.localIP());
+      WiFi.setSleep(false);
+      esp_wifi_set_ps(WIFI_PS_NONE);
+      return;
+    }
+
+    Serial.println("[WIFI] WARNING: Could not connect to stored Wi-Fi within 9 seconds.");
+    Serial.println("[WIFI] Starting Fallback Setup Access Point so you can reconfigure...");
+  } else {
+    Serial.println("\n[WIFI] No Wi-Fi credentials stored in flash.");
+    Serial.println("[WIFI] Starting Setup Access Point...");
+  }
+
+  // Dedicated Access Point Mode (Locked on Channel 1, Beacon always transmitting)
+  WiFi.disconnect(true);
+  delay(100);
+  WiFi.mode(WIFI_AP);
+  IPAddress apIP(192, 168, 4, 1);
+  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
+  
+  // Start open Access Point with no password for effortless 1-tap connection
+  bool apSuccess = WiFi.softAP("ESP32-COB-PWM", nullptr, 1, 0, 4);
+
+  // Disable sleep & power saving for responsive 24/7 web server
   WiFi.setSleep(false);
   esp_wifi_set_ps(WIFI_PS_NONE);
 
-  if (strlen(state.wifiSsid) > 0) {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(state.wifiSsid, state.wifiPass);
+  Serial.println("==================================================");
+  if (apSuccess) {
+    Serial.println("[WIFI] >>> ACCESS POINT ACTIVE & BROADCASTING <<<");
+    Serial.println("[WIFI] Network Name (SSID): ESP32-COB-PWM");
+    Serial.println("[WIFI] Security:            Open (No password required)");
+    Serial.print  ("[WIFI] Gateway / AP IP:     "); Serial.println(WiFi.softAPIP());
+    Serial.println("[WIFI] Controller URL:      http://192.168.4.1");
   } else {
-    // Start AP mode if no credentials configured
-    WiFi.mode(WIFI_AP_STA);
-    WiFi.softAP("ESP32-COB-PWM", "12345678");
+    Serial.println("[WIFI] Retrying Access Point setup...");
+    delay(300);
+    WiFi.softAP("ESP32-COB-PWM");
+    Serial.print  ("[WIFI] AP IP:               "); Serial.println(WiFi.softAPIP());
   }
+  Serial.println("==================================================\n");
 }
 
 void checkWiFiReconnect() {
@@ -392,7 +435,7 @@ void checkWiFiReconnect() {
   lastWifiCheckMillis = millis();
 
   // If configured as STA and disconnected, reconnect non-blockingly
-  if (strlen(state.wifiSsid) > 0 && WiFi.status() != WL_CONNECTED) {
+  if (strlen(state.wifiSsid) > 0 && WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
     WiFi.reconnect();
   }
 }
