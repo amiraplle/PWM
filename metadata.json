@@ -1,0 +1,6 @@
+{
+  "name": "ESP32-C3 COB PWM Controller",
+  "description": "Robust Tuya-style controller for ESP32-C3 hardware PWM COB LED with non-blocking fading, 1–100% brightness, timer, and OTA updater.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
