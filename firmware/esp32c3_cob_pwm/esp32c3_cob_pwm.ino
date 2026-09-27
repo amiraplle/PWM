@@ -31,6 +31,7 @@
 #include <ESPmDNS.h>
 #include <Preferences.h>
 #include <Update.h>
+#include <DNSServer.h>
 #include "esp_wifi.h"
 
 // Forward Declarations for standard C++ compilation
@@ -42,6 +43,8 @@ void saveStateToNVS();
 void setupWiFi();
 void checkWiFiConnection();
 void handleRoot();
+void handleCaptivePortal();
+void handleNotFound();
 void handleApiState();
 void handleApiPower();
 void handleApiBrightness();
@@ -54,6 +57,10 @@ void handleApiReboot();
 void handleApiSerialLogs();
 void handleGetWifiScan();
 uint32_t calculatePhysicalDuty(uint8_t percent);
+
+// Captive Portal DNS Server (answers all domain queries on port 53 with 192.168.4.1)
+DNSServer dnsServer;
+const byte DNS_PORT = 53;
 
 // -------------------------------------------------------------
 // Pin & LEDC Configuration
@@ -390,6 +397,7 @@ void connectWiFi() {
     Serial.println();
 
     if (WiFi.status() == WL_CONNECTED) {
+      dnsServer.stop();
       Serial.println("[WIFI] >>> SUCCESS: Connected to Home Wi-Fi! <<<");
       Serial.print  ("[WIFI] IP Address: "); Serial.println(WiFi.localIP());
       Serial.print  ("[WIFI] Web UI:     http://"); Serial.println(WiFi.localIP());
@@ -405,17 +413,31 @@ void connectWiFi() {
     Serial.println("[WIFI] Starting Setup Access Point...");
   }
 
-  // Pure Access Point Mode (Channel 1, Maximum TX Power, Broadcaster active)
+  // Pure Access Point Mode
   WiFi.disconnect(true, true);
   delay(100);
   WiFi.mode(WIFI_AP);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   
-  IPAddress apIP(192, 168, 4, 1);
-  WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  
-  // Start open Access Point with no password for effortless 1-tap connection
+  // Listen for station connection and DHCP assignment events
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    if (event == ARDUINO_EVENT_WIFI_AP_STACONNECTED) {
+      Serial.println("[AP] Client device connected to ESP32-COB-PWM");
+    } else if (event == ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED) {
+      Serial.print("[AP] Client assigned IP by DHCP: ");
+      Serial.println(IPAddress(info.wifi_ap_staipassigned.ip.addr));
+    }
+  });
+
+  // Start open Access Point with default ESP-IDF DHCP server (192.168.4.1, pool 192.168.4.2-10)
   bool apSuccess = WiFi.softAP("ESP32-COB-PWM");
+  delay(100);
+
+  // Captive Portal DNS server (intercepts all DNS queries on port 53 and resolves to 192.168.4.1)
+  IPAddress apIP = WiFi.softAPIP();
+  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  dnsServer.start(DNS_PORT, "*", apIP);
+  Serial.println("[INIT] Captive Portal DNS server active on UDP port 53.");
 
   // Keep radio awake for 24/7 web server responsiveness
   WiFi.setSleep(false);
@@ -1172,7 +1194,27 @@ setInterval(fetchState, 2000);
 </html>
 )rawliteral";
 
+void handleCaptivePortal() {
+  server.sendHeader("Location", "http://192.168.4.1/", true);
+  server.send(302, "text/plain", "");
+}
+
+void handleNotFound() {
+  if (WiFi.getMode() == WIFI_AP) {
+    String host = server.hostHeader();
+    if (host != "192.168.4.1" && host != "pwm.local") {
+      server.sendHeader("Location", "http://192.168.4.1/", true);
+      server.send(302, "text/plain", "");
+      return;
+    }
+  }
+  server.send(404, "text/plain", "Not Found");
+}
+
 void handleRoot() {
+  server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  server.sendHeader("Pragma", "no-cache");
+  server.sendHeader("Expires", "-1");
   server.send_P(200, "text/html", INDEX_HTML);
 }
 
@@ -1208,6 +1250,15 @@ void setup() {
 
   // 5. Configure REST API & OTA endpoints
   server.on("/", HTTP_GET, handleRoot);
+  server.on("/hotspot-detect.html", HTTP_GET, handleRoot);     // Apple iOS captive portal test
+  server.on("/generate_204", HTTP_GET, handleCaptivePortal);    // Android captive portal test
+  server.on("/gen_204", HTTP_GET, handleCaptivePortal);         // Android captive portal test
+  server.on("/ncsi.txt", HTTP_GET, handleCaptivePortal);        // Windows captive portal test
+  server.on("/connecttest.txt", HTTP_GET, handleCaptivePortal); // Windows captive portal test
+  server.on("/redirect", HTTP_GET, handleCaptivePortal);
+  server.on("/canonical.html", HTTP_GET, handleRoot);
+  server.on("/favicon.ico", HTTP_GET, []() { server.send(204); });
+
   server.on("/api/state", HTTP_GET, handleGetState);
   server.on("/api/state", HTTP_OPTIONS, handleOptions);
   server.on("/api/power", HTTP_POST, handlePostPower);
@@ -1230,11 +1281,19 @@ void setup() {
   // Web OTA upload handler
   server.on("/update", HTTP_POST, handleOtaFinish, handleOtaUpload);
 
+  // Catch-all handler for captive portal redirection
+  server.onNotFound(handleNotFound);
+
   server.begin();
   Serial.println("[INIT] HTTP Web server listening on port 80.");
 }
 
 void loop() {
+  // Captive Portal DNS processing (resolves all domains to 192.168.4.1 in AP mode)
+  if (WiFi.getMode() == WIFI_AP) {
+    dnsServer.processNextRequest();
+  }
+
   // Non-blocking processing routines (Continuous 24/7 operation)
   server.handleClient();
   processFadeLoop();
