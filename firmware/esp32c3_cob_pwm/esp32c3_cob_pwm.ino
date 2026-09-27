@@ -79,19 +79,22 @@ struct ControllerState {
   char mdnsHost[32];          // Hostname for mDNS (e.g. "pwm")
   char wifiSsid[33];          // Wi-Fi SSID
   char wifiPass[65];          // Wi-Fi Password
+
+  ControllerState()
+    : powerOn(true),
+      brightness(75),
+      softnessMs(400),
+      pwmFreq(DEFAULT_PWM_FREQ),
+      pwmPin(DEFAULT_PWM_PIN),
+      curveMode(0) {
+    strncpy(mdnsHost, "pwm", sizeof(mdnsHost) - 1);
+    mdnsHost[sizeof(mdnsHost) - 1] = '\0';
+    wifiSsid[0] = '\0';
+    wifiPass[0] = '\0';
+  }
 };
 
-ControllerState state = {
-  .powerOn = true,
-  .brightness = 75,
-  .softnessMs = 400,
-  .pwmFreq = DEFAULT_PWM_FREQ,
-  .pwmPin = DEFAULT_PWM_PIN,
-  .curveMode = 0,             // 0 = Linear 1:1 hardware PWM (Default)
-  .mdnsHost = "pwm",
-  .wifiSsid = "",
-  .wifiPass = ""
-};
+ControllerState state;
 
 // Timer State
 struct CountdownTimer {
@@ -99,8 +102,15 @@ struct CountdownTimer {
   unsigned long startMillis;
   unsigned long durationMillis;
   bool targetAction;          // false = Turn OFF, true = Turn ON
+
+  CountdownTimer()
+    : active(false),
+      startMillis(0),
+      durationMillis(0),
+      targetAction(false) {}
 };
-CountdownTimer countdownTimer = { false, 0, 0, false };
+
+CountdownTimer countdownTimer;
 
 // PWM Fading State (Non-blocking)
 float currentDuty = 0.0f;
