@@ -32,7 +32,6 @@
 #include <Preferences.h>
 #include <Update.h>
 #include "esp_wifi.h"
-#include "esp_bt.h"
 
 // Forward Declarations for standard C++ compilation
 void initPwmHardware();
@@ -371,16 +370,21 @@ void processTimerLoop() {
 // Wi-Fi Connection & Robust Reconnect
 // -------------------------------------------------------------
 void connectWiFi() {
+  WiFi.persistent(false);
+  WiFi.disconnect(true, true);
+  delay(100);
+
   // If credentials are saved, attempt Station mode connection first
   if (strlen(state.wifiSsid) > 0) {
     Serial.printf("\n[WIFI] Found configured SSID: '%s'\n", state.wifiSsid);
     Serial.println("[WIFI] Connecting to Wi-Fi Network...");
     WiFi.mode(WIFI_STA);
+    WiFi.setTxPower(WIFI_POWER_19_5dBm);
     WiFi.begin(state.wifiSsid, state.wifiPass);
 
     unsigned long startAttempt = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 9000) {
-      delay(300);
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 8000) {
+      delay(250);
       Serial.print(".");
     }
     Serial.println();
@@ -394,24 +398,26 @@ void connectWiFi() {
       return;
     }
 
-    Serial.println("[WIFI] WARNING: Could not connect to stored Wi-Fi within 9 seconds.");
+    Serial.println("[WIFI] WARNING: Could not connect to stored Wi-Fi within 8 seconds.");
     Serial.println("[WIFI] Starting Fallback Setup Access Point so you can reconfigure...");
   } else {
     Serial.println("\n[WIFI] No Wi-Fi credentials stored in flash.");
     Serial.println("[WIFI] Starting Setup Access Point...");
   }
 
-  // Dedicated Access Point Mode (Locked on Channel 1, Beacon always transmitting)
-  WiFi.disconnect(true);
+  // Pure Access Point Mode (Channel 1, Maximum TX Power, Broadcaster active)
+  WiFi.disconnect(true, true);
   delay(100);
   WiFi.mode(WIFI_AP);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+  
   IPAddress apIP(192, 168, 4, 1);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   
   // Start open Access Point with no password for effortless 1-tap connection
-  bool apSuccess = WiFi.softAP("ESP32-COB-PWM", nullptr, 1, 0, 4);
+  bool apSuccess = WiFi.softAP("ESP32-COB-PWM");
 
-  // Disable sleep & power saving for responsive 24/7 web server
+  // Keep radio awake for 24/7 web server responsiveness
   WiFi.setSleep(false);
   esp_wifi_set_ps(WIFI_PS_NONE);
 
@@ -1180,32 +1186,27 @@ void setup() {
   Serial.println("  ESP32-C3 COB PWM Controller - Starting Up ");
   Serial.println("============================================");
 
-  // 1. COMPLETELY DISABLE BLUETOOTH & BLE
-  btStop();
-  esp_bt_controller_disable();
-  esp_bt_mem_release(ESP_BT_MODE_BTDM);
-  Serial.println("[INIT] Bluetooth disabled & memory released.");
-
-  // 2. Load stored state from Preferences (NVS)
+  // 1. Load stored state from Preferences (NVS)
   loadSettingsFromNVS();
   Serial.printf("[INIT] Loaded Settings: Brightness=%u%%, Softness=%ums, Freq=%uHz, Power=%s, Pin=GPIO%u\n",
     state.brightness, state.softnessMs, state.pwmFreq, state.powerOn ? "ON" : "OFF", state.pwmPin);
+  Serial.printf("[INIT] Stored Wi-Fi SSID: '%s'\n", state.wifiSsid);
 
-  // 3. Initialize hardware LEDC PWM
+  // 2. Initialize hardware LEDC PWM
   initPwmHardware();
   Serial.println("[INIT] Hardware LEDC PWM initialized.");
 
-  // 4. Initialize Wi-Fi (Disable sleep / power-saving for 24/7 responsiveness)
+  // 3. Initialize Wi-Fi (Disable sleep / power-saving for 24/7 responsiveness)
   connectWiFi();
   Serial.println("[INIT] Wi-Fi started with zero power-saving sleep.");
 
-  // 5. Initialize mDNS
+  // 4. Initialize mDNS
   if (MDNS.begin(state.mdnsHost)) {
     Serial.printf("[INIT] mDNS responder started: http://%s.local\n", state.mdnsHost);
     MDNS.addService("http", "tcp", 80);
   }
 
-  // 6. Configure REST API & OTA endpoints
+  // 5. Configure REST API & OTA endpoints
   server.on("/", HTTP_GET, handleRoot);
   server.on("/api/state", HTTP_GET, handleGetState);
   server.on("/api/state", HTTP_OPTIONS, handleOptions);
