@@ -53,6 +53,7 @@ void handleApiTimer();
 void handleApiSettings();
 void handleApiReboot();
 void handleApiSerialLogs();
+void handleGetWifiScan();
 uint32_t calculatePhysicalDuty(uint8_t percent);
 
 // -------------------------------------------------------------
@@ -485,13 +486,29 @@ void handleGetState() {
   json += "\"uptime\":" + String(millis() / 1000UL) + ",";
   json += "\"freeHeap\":" + String(ESP.getFreeHeap()) + ",";
   json += "\"rssi\":" + String(WiFi.RSSI()) + ",";
-  json += "\"ip\":\"" + WiFi.localIP().toString() + "\",";
+  json += "\"ip\":\"" + (WiFi.getMode() == WIFI_AP ? WiFi.softAPIP().toString() : WiFi.localIP().toString()) + "\",";
+  json += "\"isAP\":" + String(WiFi.getMode() == WIFI_AP ? "true" : "false") + ",";
   json += "\"mac\":\"" + WiFi.macAddress() + "\",";
   json += "\"chip\":\"ESP32-C3\",";
   json += "\"compileDate\":\"" + String(__DATE__) + " " + String(__TIME__) + "\"";
   json += "}";
   json += "}";
 
+  sendJsonResponse(200, json);
+}
+
+void handleGetWifiScan() {
+  int n = WiFi.scanNetworks(false, false);
+  if (n < 0) n = 0;
+  String json = "[";
+  for (int i = 0; i < n; ++i) {
+    if (i > 0) json += ",";
+    String ssid = WiFi.SSID(i);
+    ssid.replace("\"", "\\\"");
+    json += "{\"ssid\":\"" + ssid + "\",\"rssi\":" + String(WiFi.RSSI(i)) + ",\"open\":" + String(WiFi.encryptionType(i) == WIFI_AUTH_OPEN ? "true" : "false") + "}";
+  }
+  json += "]";
+  WiFi.scanDelete();
   sendJsonResponse(200, json);
 }
 
@@ -761,36 +778,59 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <title>COB Controller</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
-body{background:#000;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:16px 16px 24px}
-.header{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:center;padding:12px 4px}
-.title{font-size:18px;font-weight:700;letter-spacing:-0.02em;color:#f3f4f6}
-.status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981;display:inline-block;margin-right:6px}
-.main{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:12px}
-.power-btn{width:140px;height:140px;border-radius:50%;background:#11141c;border:3px solid #1f293d;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s ease;box-shadow:0 10px 30px rgba(0,0,0,.6);outline:none}
+body{background:#000;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 14px 70px}
+.header{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:center;padding:10px 4px}
+.title{font-size:17px;font-weight:700;color:#f3f4f6;display:flex;align-items:center;gap:6px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981}
+.status-dot.ap{background:#f59e0b;box-shadow:0 0 10px #f59e0b}
+.badge{font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:6px;background:#161d2d;color:#00e5ff;border:1px solid #232e48}
+.view{width:100%;max-width:440px;display:none;flex-direction:column;align-items:center;gap:18px;margin-top:6px}
+.view.active{display:flex}
+.power-btn{width:130px;height:130px;border-radius:50%;background:#11141c;border:3px solid #1f293d;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s ease;box-shadow:0 10px 30px rgba(0,0,0,.6);outline:none}
 .power-btn.active{background:#0a2540;border-color:#00e5ff;box-shadow:0 0 40px rgba(0,229,255,.4),inset 0 0 20px rgba(0,229,255,.3)}
-.power-icon{width:56px;height:56px;fill:none;stroke:#64748b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .25s}
+.power-icon{width:52px;height:52px;fill:none;stroke:#64748b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .25s}
 .power-btn.active .power-icon{stroke:#00e5ff}
-.card{width:100%;background:#0d1117;border:1px solid #1e2638;border-radius:24px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.card{width:100%;background:#0d1117;border:1px solid #1e2638;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .card-header{display:flex;justify-content:space-between;align-items:center}
-.card-label{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8}
-.card-val{font-size:22px;font-weight:700;color:#00e5ff;font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;height:38px;-webkit-appearance:none;background:transparent;outline:none}
-input[type=range]::-webkit-slider-runnable-track{height:12px;background:#182030;border-radius:6px}
-input[type=range]::-webkit-slider-thumb{width:32px;height:32px;-webkit-appearance:none;border-radius:50%;background:#fff;border:3px solid #00e5ff;box-shadow:0 2px 10px rgba(0,229,255,.5);margin-top:-10px;cursor:pointer}
-.presets{display:flex;gap:8px;width:100%}
-.preset-btn{flex:1;padding:8px 0;background:#161d2d;border:1px solid #232e48;color:#94a3b8;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer}
+.card-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8}
+.card-val{font-size:20px;font-weight:700;color:#00e5ff;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;height:36px;-webkit-appearance:none;background:transparent;outline:none}
+input[type=range]::-webkit-slider-runnable-track{height:10px;background:#182030;border-radius:5px}
+input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearance:none;border-radius:50%;background:#fff;border:3px solid #00e5ff;box-shadow:0 2px 10px rgba(0,229,255,.5);margin-top:-9px;cursor:pointer}
+.presets{display:flex;gap:6px;width:100%}
+.preset-btn{flex:1;padding:8px 0;background:#161d2d;border:1px solid #232e48;color:#94a3b8;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer}
 .preset-btn:hover{color:#fff;border-color:#00e5ff}
-.nav{width:100%;max-width:440px;display:flex;justify-content:space-around;background:#0d1117;border:1px solid #1e2638;border-radius:20px;padding:10px 6px;margin-top:20px}
-.nav-btn{background:none;border:none;color:#64748b;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 12px;border-radius:12px}
+.field-group{display:flex;flex-direction:column;gap:6px}
+.field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8}
+.field-input{width:100%;padding:12px 14px;background:#161d2d;border:1px solid #232e48;border-radius:12px;color:#fff;font-size:14px;outline:none}
+.field-input:focus{border-color:#00e5ff}
+.btn{width:100%;padding:12px;border-radius:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+.btn-primary{background:#00e5ff;color:#000}
+.btn-primary:active{transform:scale(.98)}
+.btn-secondary{background:#161d2d;border:1px solid #232e48;color:#00e5ff}
+.btn-danger{background:#dc2626;color:#fff}
+.alert-banner{padding:12px 14px;border-radius:14px;font-size:12px;line-height:1.4;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fbbf24}
+.alert-banner.success{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:#34d399}
+.wifi-item{padding:10px 12px;border-radius:10px;background:#161d2d;border:1px solid #232e48;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13px}
+.wifi-item:hover{border-color:#00e5ff}
+.nav{position:fixed;bottom:12px;width:calc(100% - 24px);max-width:440px;display:flex;justify-content:space-around;background:#0d1117;border:1px solid #1e2638;border-radius:18px;padding:8px 4px;box-shadow:0 10px 30px rgba(0,0,0,.8);z-index:90}
+.nav-btn{background:none;border:none;color:#64748b;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 12px;border-radius:10px}
 .nav-btn.active{color:#00e5ff}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+.modal-overlay.active{display:flex}
+.modal-box{background:#0d1117;border:1px solid #1e2638;border-radius:24px;padding:24px;max-width:380px;width:100%;display:flex;flex-direction:column;gap:14px;text-align:center}
 </style>
 </head>
 <body>
+
 <div class="header">
-  <div class="title"><span class="status-dot"></span>COB PWM Controller</div>
-  <div style="font-size:12px;color:#64748b;font-family:monospace">ESP32-C3</div>
+  <div class="title"><span id="dot" class="status-dot"></span>COB Controller</div>
+  <div id="ipBadge" class="badge">ESP32-C3</div>
 </div>
-<div class="main">
+
+<!-- VIEW 1: MAIN CONTROL -->
+<div id="view-control" class="view active">
   <button id="pwrBtn" class="power-btn" onclick="togglePower()">
     <svg class="power-icon" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>
   </button>
@@ -808,6 +848,13 @@ input[type=range]::-webkit-slider-thumb{width:32px;height:32px;-webkit-appearanc
   <div class="card">
     <div class="card-header"><span class="card-label">Softness / Fade</span><span id="sVal" class="card-val">400ms</span></div>
     <input type="range" id="sSlider" min="0" max="3000" step="50" value="400" oninput="onSoft(this.value)">
+    <div class="presets">
+      <button class="preset-btn" onclick="setSoft(0)">0ms</button>
+      <button class="preset-btn" onclick="setSoft(200)">200ms</button>
+      <button class="preset-btn" onclick="setSoft(400)">400ms</button>
+      <button class="preset-btn" onclick="setSoft(1000)">1000ms</button>
+      <button class="preset-btn" onclick="setSoft(2000)">2000ms</button>
+    </div>
   </div>
   <div class="card">
     <div class="card-header"><span class="card-label">PWM Frequency</span><span id="fVal" class="card-val">5000 Hz</span></div>
@@ -819,50 +866,301 @@ input[type=range]::-webkit-slider-thumb{width:32px;height:32px;-webkit-appearanc
     </div>
   </div>
 </div>
+
+<!-- VIEW 2: WI-FI SETUP -->
+<div id="view-wifi" class="view">
+  <div id="wifiBanner" class="alert-banner">
+    ESP32 Setup Hotspot Active (192.168.4.1). Connect to your 2.4 GHz home Wi-Fi network below.
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-label">Wi-Fi Network Setup</span></div>
+    <button type="button" class="btn btn-secondary" onclick="scanWifi()">🔍 Scan Available Networks</button>
+    <div id="wifiList" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto"></div>
+    <div class="field-group">
+      <label class="field-label">Network Name (SSID)</label>
+      <input type="text" id="wfSsid" class="field-input" placeholder="Enter home Wi-Fi SSID">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Wi-Fi Password</label>
+      <div style="display:flex;gap:6px">
+        <input type="password" id="wfPass" class="field-input" placeholder="Enter Wi-Fi password">
+        <button type="button" class="btn btn-secondary" style="width:auto;padding:0 14px" onclick="togglePass()">👁</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" onclick="saveWifi()">💾 Save & Connect to Network</button>
+  </div>
+</div>
+
+<!-- VIEW 3: SYSTEM & OTA -->
+<div id="view-system" class="view">
+  <div class="card">
+    <div class="card-header"><span class="card-label">Hardware Configuration</span></div>
+    <div class="field-group">
+      <label class="field-label">PWM Output GPIO Pin</label>
+      <select id="sysPin" class="field-input">
+        <option value="0">GPIO 0</option><option value="1">GPIO 1</option>
+        <option value="2">GPIO 2</option><option value="3">GPIO 3</option>
+        <option value="4" selected>GPIO 4 (Default / MOSFET)</option>
+        <option value="5">GPIO 5</option><option value="6">GPIO 6</option>
+        <option value="7">GPIO 7</option><option value="8">GPIO 8</option>
+        <option value="9">GPIO 9</option><option value="10">GPIO 10</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Dimming Curve</label>
+      <select id="sysCurve" class="field-input">
+        <option value="1">CIE 1931 Perceptual Eye Curve (Recommended)</option>
+        <option value="0">Linear 1:1 Direct Duty</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">mDNS Hostname</label>
+      <input type="text" id="sysHost" class="field-input" placeholder="pwm">
+    </div>
+    <button type="button" class="btn btn-primary" onclick="saveSystem()">💾 Save Hardware Settings</button>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-label">OTA Firmware Update</span></div>
+    <input type="file" id="otaFile" accept=".bin" class="field-input" style="padding:8px">
+    <button type="button" class="btn btn-secondary" onclick="uploadOta()">⚡ Upload Firmware (.bin)</button>
+    <div id="otaStatus" style="font-size:12px;color:#94a3b8;text-align:center"></div>
+  </div>
+  <button type="button" class="btn btn-danger" onclick="rebootEsp()">🔄 Reboot ESP32</button>
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<div class="nav">
+  <button class="nav-btn active" id="btn-tab-control" onclick="showTab('control')">
+    <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+    Control
+  </button>
+  <button class="nav-btn" id="btn-tab-wifi" onclick="showTab('wifi')">
+    <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+    Wi-Fi Setup
+  </button>
+  <button class="nav-btn" id="btn-tab-system" onclick="showTab('system')">
+    <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    System
+  </button>
+</div>
+
+<!-- REBOOT MODAL -->
+<div id="modal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 style="font-size:18px;color:#00e5ff">Reconnecting ESP32...</h3>
+    <p id="modalMsg" style="font-size:13px;color:#94a3b8;line-height:1.5">
+      Connecting to your home Wi-Fi network. Reconnect your phone/PC to your home Wi-Fi and open http://pwm.local
+    </p>
+  </div>
+</div>
+
 <script>
-let curState={power:false,brightness:75,softness:400,frequency:5000};
+let curState = { power:false, brightness:75, softness:400, frequency:5000 };
+let hasAutoSwitched = false;
+
+const showTab = (tab) => {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  document.getElementById('btn-tab-' + tab).classList.add('active');
+};
+
 const fetchState = () => {
-  fetch('/api/state').then(r=>r.json()).then(d=>{
-    curState=d;
-    document.getElementById('pwrBtn').className='power-btn '+(d.power?'active':'');
-    document.getElementById('bVal').innerText=d.brightness+'%';
-    document.getElementById('bSlider').value=d.brightness;
-    document.getElementById('sVal').innerText=d.softness+'ms';
-    document.getElementById('sSlider').value=d.softness;
-    document.getElementById('fVal').innerText=d.frequency+' Hz';
-  }).catch(()=>{});
+  fetch('/api/state').then(r => r.json()).then(d => {
+    curState = d;
+    document.getElementById('pwrBtn').className = 'power-btn ' + (d.power ? 'active' : '');
+    document.getElementById('bVal').innerText = d.brightness + '%';
+    document.getElementById('bSlider').value = d.brightness;
+    document.getElementById('sVal').innerText = d.softness + 'ms';
+    document.getElementById('sSlider').value = d.softness;
+    document.getElementById('fVal').innerText = d.frequency + ' Hz';
+    if (d.settings) {
+      document.getElementById('ipBadge').innerText = d.settings.ip || 'ESP32-C3';
+      const isAP = d.settings.isAP === true || (d.settings.ip && d.settings.ip.indexOf('192.168.4.') === 0);
+      const dot = document.getElementById('dot');
+      const banner = document.getElementById('wifiBanner');
+      if (isAP) {
+        dot.className = 'status-dot ap';
+        banner.className = 'alert-banner';
+        banner.innerText = '⚠️ Setup Hotspot Active (192.168.4.1). Connect to your 2.4 GHz home Wi-Fi below.';
+        if (!hasAutoSwitched) {
+          hasAutoSwitched = true;
+          showTab('wifi');
+        }
+      } else {
+        dot.className = 'status-dot';
+        banner.className = 'alert-banner success';
+        banner.innerText = 'Connected to Home Wi-Fi: ' + (d.settings.wifiSsid || '') + ' (' + d.settings.ip + ')';
+      }
+      if (d.settings.wifiSsid && !document.getElementById('wfSsid').value) {
+        document.getElementById('wfSsid').value = d.settings.wifiSsid;
+      }
+      if (d.settings.pwmGpio !== undefined) {
+        document.getElementById('sysPin').value = d.settings.pwmGpio;
+      }
+      if (d.curveMode !== undefined) {
+        document.getElementById('sysCurve').value = d.curveMode;
+      }
+      if (d.settings.mdnsHost) {
+        document.getElementById('sysHost').value = d.settings.mdnsHost;
+      }
+    }
+  }).catch(() => {});
 };
+
 const togglePower = () => {
-  fetch('/api/power',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({power:!curState.power})}).then(fetchState);
+  fetch('/api/power', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ power:!curState.power }) }).then(fetchState);
 };
+
 let bTimer;
 const onBright = (v) => {
-  v=Math.max(1,Math.min(100,parseInt(v)));
-  document.getElementById('bVal').innerText=v+'%';
+  v = Math.max(1, Math.min(100, parseInt(v, 10)));
+  document.getElementById('bVal').innerText = v + '%';
   clearTimeout(bTimer);
-  bTimer=setTimeout(()=>{
-    fetch('/api/brightness',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({brightness:v})});
-  },60);
+  bTimer = setTimeout(() => {
+    fetch('/api/brightness', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ brightness:v }) });
+  }, 60);
 };
+
 const setBright = (v) => {
-  document.getElementById('bSlider').value=v;
+  document.getElementById('bSlider').value = v;
   onBright(v);
 };
+
 let sTimer;
 const onSoft = (v) => {
-  v=Math.max(0,Math.min(3000,parseInt(v)));
-  document.getElementById('sVal').innerText=v+'ms';
+  v = Math.max(0, Math.min(3000, parseInt(v, 10)));
+  document.getElementById('sVal').innerText = v + 'ms';
   clearTimeout(sTimer);
-  sTimer=setTimeout(()=>{
-    fetch('/api/softness',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({softness:v})});
-  },80);
+  sTimer = setTimeout(() => {
+    fetch('/api/softness', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ softness:v }) });
+  }, 80);
 };
+
+const setSoft = (v) => {
+  document.getElementById('sSlider').value = v;
+  onSoft(v);
+};
+
 const setFreq = (v) => {
-  document.getElementById('fVal').innerText=v+' Hz';
-  fetch('/api/frequency',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({frequency:v})}).then(fetchState);
+  document.getElementById('fVal').innerText = v + ' Hz';
+  fetch('/api/frequency', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ frequency:v }) }).then(fetchState);
 };
+
+const togglePass = () => {
+  const p = document.getElementById('wfPass');
+  p.type = p.type === 'password' ? 'text' : 'password';
+};
+
+const scanWifi = () => {
+  const list = document.getElementById('wifiList');
+  list.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:6px">Scanning 2.4 GHz networks...</div>';
+  fetch('/api/wifi/scan').then(r => r.json()).then(arr => {
+    list.innerHTML = '';
+    if (!arr || arr.length === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:6px">No networks detected.</div>';
+      return;
+    }
+    arr.forEach(net => {
+      const div = document.createElement('div');
+      div.className = 'wifi-item';
+      div.innerHTML = '<span>' + net.ssid + '</span><span class="badge">' + net.rssi + ' dBm' + (net.open ? ' Open' : '') + '</span>';
+      div.onclick = () => {
+        document.getElementById('wfSsid').value = net.ssid;
+        document.getElementById('wfPass').focus();
+      };
+      list.appendChild(div);
+    });
+  }).catch(() => {
+    list.innerHTML = '<div style="font-size:12px;color:#f87171;padding:6px">Scan failed. Enter SSID manually.</div>';
+  });
+};
+
+const saveWifi = () => {
+  const ssid = document.getElementById('wfSsid').value.trim();
+  const pass = document.getElementById('wfPass').value;
+  if (!ssid) {
+    alert('Please enter a Wi-Fi SSID.');
+    return;
+  }
+  const modal = document.getElementById('modal');
+  const modalMsg = document.getElementById('modalMsg');
+  modal.classList.add('active');
+  modalMsg.innerText = 'Saving credentials to flash and connecting to "' + ssid + '"... Reconnect your phone/PC to "' + ssid + '" and visit http://pwm.local';
+
+  fetch('/api/settings', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ wifiSsid:ssid, wifiPass:pass })
+  }).then(() => {
+    setTimeout(() => {
+      fetch('/api/reboot', { method:'POST' }).catch(() => {});
+    }, 600);
+  }).catch(() => {});
+};
+
+const saveSystem = () => {
+  const pin = parseInt(document.getElementById('sysPin').value, 10);
+  const curve = parseInt(document.getElementById('sysCurve').value, 10);
+  const host = document.getElementById('sysHost').value.trim() || 'pwm';
+  fetch('/api/settings', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ pwmGpio:pin, curveMode:curve, mdnsHost:host })
+  }).then(() => {
+    alert('Hardware settings saved to flash successfully!');
+    fetchState();
+  }).catch(() => {
+    alert('Failed to save settings.');
+  });
+};
+
+const rebootEsp = () => {
+  if (confirm('Reboot ESP32 now?')) {
+    fetch('/api/reboot', { method:'POST' });
+    document.getElementById('modal').classList.add('active');
+    document.getElementById('modalMsg').innerText = 'ESP32 is rebooting... Page will reload in 5s.';
+    setTimeout(() => location.reload(), 5000);
+  }
+};
+
+const uploadOta = () => {
+  const fileInput = document.getElementById('otaFile');
+  if (!fileInput.files.length) {
+    alert('Select a .bin firmware file first.');
+    return;
+  }
+  const file = fileInput.files[0];
+  const stat = document.getElementById('otaStatus');
+  stat.innerText = 'Uploading 0%...';
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/update');
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      const pct = Math.round((e.loaded / e.total) * 100);
+      stat.innerText = 'Uploading ' + pct + '%...';
+    }
+  };
+  xhr.onload = () => {
+    if (xhr.status === 200) {
+      stat.innerText = 'Flashing complete! ESP32 is rebooting...';
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('modalMsg').innerText = 'Firmware updated! ESP32 is rebooting. Page will reload in 7s.';
+      setTimeout(() => location.reload(), 7000);
+    } else {
+      stat.innerText = 'Upload failed: ' + xhr.responseText;
+    }
+  };
+  xhr.onerror = () => {
+    stat.innerText = 'Network error during upload.';
+  };
+  const fd = new FormData();
+  fd.append('firmware', file);
+  xhr.send(fd);
+};
+
 fetchState();
-setInterval(fetchState,2000);
+setInterval(fetchState, 2000);
 </script>
 </body>
 </html>
@@ -923,6 +1221,8 @@ void setup() {
   server.on("/api/timer", HTTP_OPTIONS, handleOptions);
   server.on("/api/settings", HTTP_POST, handlePostSettings);
   server.on("/api/settings", HTTP_OPTIONS, handleOptions);
+  server.on("/api/wifi/scan", HTTP_GET, handleGetWifiScan);
+  server.on("/api/wifi/scan", HTTP_OPTIONS, handleOptions);
   server.on("/api/reboot", HTTP_POST, handlePostReboot);
   server.on("/api/reboot", HTTP_OPTIONS, handleOptions);
 
