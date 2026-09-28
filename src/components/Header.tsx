@@ -48,7 +48,13 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-gray-400 font-mono truncate max-w-[190px]">
-            {isOnline ? targetHost.replace(/^https?:\/\//, '') : 'Simulated / Reconnecting'}
+            {isOnline
+              ? targetHost.replace(/^https?:\/\//, '')
+              : status === 'connecting'
+              ? 'Connecting...'
+              : status === 'reconnecting'
+              ? 'Reconnecting...'
+              : 'Offline (Not connected)'}
           </p>
         </div>
       </div>

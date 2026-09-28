@@ -292,6 +292,18 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-md w-full mx-auto px-4 pt-4 pb-24">
+        {status === 'offline' && (
+          <div className="mb-4 p-3 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-center justify-between gap-2 shadow-lg">
+            <span>⚠️ ESP32 offline at <code className="font-mono font-bold text-white">{targetHost}</code>. Connect to ESP32 Wi-Fi or verify address.</span>
+            <button
+              onClick={syncState}
+              className="px-2.5 py-1 rounded-xl bg-rose-900/60 hover:bg-rose-800 text-white font-semibold text-[11px] whitespace-nowrap cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {currentTab === 'controller' && (
           <MainController
             state={state}

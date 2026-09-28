@@ -444,25 +444,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">Wi-Fi RSSI</span>
-            <span className="text-emerald-400 font-semibold">{settings.rssi} dBm</span>
+            <span className="text-emerald-400 font-semibold">{settings.rssi ? `${settings.rssi} dBm` : '—'}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">Free Heap RAM</span>
             <span className="text-cyan-300 font-semibold">
-              {(settings.freeHeap / 1024).toFixed(1)} KB
+              {settings.freeHeap > 0 ? `${(settings.freeHeap / 1024).toFixed(1)} KB` : '—'}
             </span>
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">Uptime</span>
-            <span className="text-gray-200 font-semibold">{formatUptime(settings.uptime)}</span>
+            <span className="text-gray-200 font-semibold">{settings.uptime > 0 ? formatUptime(settings.uptime) : '—'}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">IP Address</span>
-            <span className="text-gray-200 font-semibold">{settings.ip}</span>
+            <span className="text-gray-200 font-semibold">{settings.ip || '—'}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">MAC Address</span>
-            <span className="text-gray-200 font-semibold">{settings.mac}</span>
+            <span className="text-gray-200 font-semibold">{settings.mac || '—'}</span>
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">Wi-Fi Power Saving</span>

@@ -2,13 +2,13 @@ import { ControllerState } from '../types';
 
 export const DEFAULT_ESP32_HOST = 'http://pwm.local';
 
-// Default initial state matching ESP32 firmware defaults
+// Default initial state representing uninitialized state before ESP32 responds
 export const INITIAL_STATE: ControllerState = {
   power: false,
   brightness: 75,
   softness: 400,
   frequency: 5000,
-  curveMode: 0, // 0 = Linear 1:1 (Default), 1 = Gamma 2.2
+  curveMode: 0,
   timer: {
     active: false,
     durationSec: 0,
@@ -17,21 +17,21 @@ export const INITIAL_STATE: ControllerState = {
   },
   settings: {
     mdnsHost: 'pwm',
-    wifiSsid: 'Home_WiFi',
+    wifiSsid: '',
     pwmGpio: 4,
-    uptime: 1420,
-    freeHeap: 218400,
-    rssi: -58,
-    ip: '192.168.1.185',
-    mac: '7C:DF:A1:42:30:19',
-    chip: 'ESP32-C3 RISC-V',
-    compileDate: 'Sep 27 2026'
+    uptime: 0,
+    freeHeap: 0,
+    rssi: 0,
+    ip: '',
+    mac: '',
+    chip: 'ESP32-C3',
+    compileDate: ''
   }
 };
 
 class Esp32Client {
   private targetHost: string = DEFAULT_ESP32_HOST;
-  private useProxy: boolean = true;
+  private useProxy: boolean = false;
 
   constructor() {
     const savedHost = localStorage.getItem('esp32_target_host');
