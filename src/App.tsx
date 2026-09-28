@@ -92,17 +92,18 @@ export default function App() {
 
   // Handlers for Main Controller
   const handleTogglePower = async () => {
+    const prevPower = state.power;
     const nextPower = !state.power;
-    // Optimistic UI update
-    setState((prev) => ({ ...prev, power: nextPower }));
 
     try {
       setIsUpdating(true);
       const res = await esp32Client.setPower(nextPower);
       setState(res);
       setStatus('connected');
-    } catch {
-      // Offline fallback: keep local optimistic state
+    } catch (err: any) {
+      // Revert state on failure — never fake success
+      setState((prev) => ({ ...prev, power: prevPower }));
+      setStatus('offline');
     } finally {
       setIsUpdating(false);
     }
@@ -111,28 +112,31 @@ export default function App() {
   const handleBrightnessChange = (val: number) => {
     // STRICT REQUIREMENT: Range MUST be 1–100%. 0% is forbidden.
     const clamped = Math.max(1, Math.min(100, Math.round(val)));
+    const prevBrightness = state.brightness;
 
-    // Optimistic update: Note: changing brightness while OFF preserves OFF state!
+    // Local UI update while dragging
     setState((prev) => ({ ...prev, brightness: clamped }));
 
     if (brightnessDebounceRef.current) {
       clearTimeout(brightnessDebounceRef.current);
     }
 
-    // Debounce network write (prevents NVS wear-level spam while slider is dragging)
+    // Debounce network write
     brightnessDebounceRef.current = setTimeout(async () => {
       try {
         const res = await esp32Client.setBrightness(clamped);
         setState(res);
         setStatus('connected');
       } catch {
-        // Offline fallback
+        setState((prev) => ({ ...prev, brightness: prevBrightness }));
+        setStatus('offline');
       }
     }, 100);
   };
 
   const handleSoftnessChange = (val: number) => {
     const clamped = Math.max(0, Math.min(3000, Math.round(val)));
+    const prevSoftness = state.softness;
     setState((prev) => ({ ...prev, softness: clamped }));
 
     if (softnessDebounceRef.current) {
@@ -145,13 +149,15 @@ export default function App() {
         setState(res);
         setStatus('connected');
       } catch {
-        // Offline fallback
+        setState((prev) => ({ ...prev, softness: prevSoftness }));
+        setStatus('offline');
       }
     }, 120);
   };
 
   const handleFrequencyChange = (val: number) => {
     const clamped = Math.max(500, Math.min(25000, Math.round(val)));
+    const prevFrequency = state.frequency;
     setState((prev) => ({ ...prev, frequency: clamped }));
 
     if (frequencyDebounceRef.current) {
@@ -164,52 +170,34 @@ export default function App() {
         setState(res);
         setStatus('connected');
       } catch {
-        // Offline fallback
+        setState((prev) => ({ ...prev, frequency: prevFrequency }));
+        setStatus('offline');
       }
     }, 150);
   };
 
   // Timer Handlers
   const handleStartTimer = async (durationSec: number, action: 'on' | 'off') => {
-    setState((prev) => ({
-      ...prev,
-      timer: {
-        active: true,
-        durationSec,
-        remainingSec: durationSec,
-        action,
-      },
-    }));
-
     try {
       setIsUpdating(true);
       const res = await esp32Client.startTimer(durationSec, action);
       setState(res);
       setStatus('connected');
     } catch {
-      // Offline fallback
+      setStatus('offline');
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleCancelTimer = async () => {
-    setState((prev) => ({
-      ...prev,
-      timer: {
-        ...prev.timer,
-        active: false,
-        remainingSec: 0,
-      },
-    }));
-
     try {
       setIsUpdating(true);
       const res = await esp32Client.cancelTimer();
       setState(res);
       setStatus('connected');
     } catch {
-      // Offline fallback
+      setStatus('offline');
     } finally {
       setIsUpdating(false);
     }
@@ -237,25 +225,11 @@ export default function App() {
   }) => {
     try {
       setIsUpdating(true);
-      // Optimistic update
-      if (newSettings.curveMode !== undefined) {
-        setState((prev) => ({ ...prev, curveMode: newSettings.curveMode! }));
-      }
       const res = await esp32Client.updateSettings(newSettings);
       setState(res);
       setStatus('connected');
     } catch {
-      // Offline fallback
-      setState((prev) => ({
-        ...prev,
-        ...(newSettings.curveMode !== undefined ? { curveMode: newSettings.curveMode } : {}),
-        settings: {
-          ...prev.settings,
-          ...(newSettings.pwmGpio !== undefined ? { pwmGpio: newSettings.pwmGpio } : {}),
-          ...(newSettings.mdnsHost !== undefined ? { mdnsHost: newSettings.mdnsHost } : {}),
-          ...(newSettings.wifiSsid !== undefined ? { wifiSsid: newSettings.wifiSsid } : {}),
-        },
-      }));
+      setStatus('offline');
     } finally {
       setIsUpdating(false);
     }
