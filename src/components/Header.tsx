@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
             <h1 className="text-base font-bold tracking-tight text-white">
               COB PWM Controller
             </h1>
-            <span className="text-[10px] uppercase font-mono font-bold tracking-wider px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">
+            <span className="text-[10px] uppercase font-mono font-medium tracking-wider text-amber-300/90">
               ESP32-C3
             </span>
           </div>
@@ -64,15 +64,15 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onRefresh}
           disabled={isPolling}
           title="Sync state from ESP32"
-          className="p-2 rounded-xl bg-gray-900/80 border border-gray-800 text-gray-300 hover:text-cyan-400 hover:border-cyan-500/40 active:scale-95 transition-all"
+          className="p-2 rounded-xl bg-gray-900/80 border border-gray-800 text-gray-300 hover:text-amber-300 hover:border-amber-500/40 active:scale-95 transition-all"
         >
-          <RefreshCw className={`w-4 h-4 ${isPolling ? 'animate-spin text-cyan-400' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${isPolling ? 'animate-spin text-amber-400' : ''}`} />
         </button>
 
         <button
           onClick={onOpenSerial}
           title="USB-C Serial Console"
-          className="p-2 rounded-xl bg-gray-900/80 border border-gray-800 text-gray-300 hover:text-cyan-400 hover:border-cyan-500/40 active:scale-95 transition-all"
+          className="p-2 rounded-xl bg-gray-900/80 border border-gray-800 text-gray-300 hover:text-amber-300 hover:border-amber-500/40 active:scale-95 transition-all"
         >
           <Terminal className="w-4 h-4" />
         </button>
@@ -80,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenFirmware}
           title="Firmware Source & Wiring"
-          className="p-2 rounded-xl bg-gray-900/80 border border-gray-800 text-gray-300 hover:text-cyan-400 hover:border-cyan-500/40 active:scale-95 transition-all"
+          className="p-2 rounded-xl bg-gray-900/80 border border-gray-800 text-gray-300 hover:text-amber-300 hover:border-amber-500/40 active:scale-95 transition-all"
         >
           <FileCode2 className="w-4 h-4" />
         </button>

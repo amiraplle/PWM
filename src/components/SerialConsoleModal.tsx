@@ -77,7 +77,7 @@ export const SerialConsoleModal: React.FC<SerialConsoleModalProps> = ({
       <div className="w-full max-w-xl bg-gray-950 border border-gray-800 rounded-3xl p-5 flex flex-col gap-3 shadow-2xl">
         <div className="flex items-center justify-between border-b border-gray-900 pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+            <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <Terminal className="w-4 h-4" />
             </div>
             <div>
@@ -98,7 +98,7 @@ export const SerialConsoleModal: React.FC<SerialConsoleModalProps> = ({
               <button
                 onClick={handleConnect}
                 disabled={!isSupported}
-                className="px-3 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/30 cursor-pointer disabled:opacity-40"
+                className="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-semibold hover:bg-amber-500/30 cursor-pointer disabled:opacity-40"
               >
                 Connect ESP32
               </button>
@@ -152,12 +152,12 @@ export const SerialConsoleModal: React.FC<SerialConsoleModalProps> = ({
               onChange={(e) => setInputCmd(e.target.value)}
               placeholder="Send command to ESP32 serial..."
               disabled={!isConnected}
-              className="flex-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-cyan-500 disabled:opacity-50"
+              className="flex-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500 disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={!isConnected || !inputCmd.trim()}
-              className="px-3 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/30 disabled:opacity-40 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 text-xs font-semibold hover:bg-amber-500/30 disabled:opacity-40 cursor-pointer"
             >
               Send
             </button>

@@ -806,39 +806,40 @@ body{background:#000;color:#fff;min-height:100vh;display:flex;flex-direction:col
 .title{font-size:17px;font-weight:700;color:#f3f4f6;display:flex;align-items:center;gap:6px}
 .status-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 10px #10b981}
 .status-dot.ap{background:#f59e0b;box-shadow:0 0 10px #f59e0b}
-.badge{font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:6px;background:#161d2d;color:#00e5ff;border:1px solid #232e48}
-.view{width:100%;max-width:440px;display:none;flex-direction:column;align-items:center;gap:18px;margin-top:6px}
+.badge{font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:6px;background:#161d2d;color:#f59e0b;border:1px solid #332614}
+.view{width:100%;max-width:440px;display:none;flex-direction:column;align-items:center;gap:16px;margin-top:6px}
 .view.active{display:flex}
 .power-btn{width:130px;height:130px;border-radius:50%;background:#11141c;border:3px solid #1f293d;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s ease;box-shadow:0 10px 30px rgba(0,0,0,.6);outline:none}
-.power-btn.active{background:#0a2540;border-color:#00e5ff;box-shadow:0 0 40px rgba(0,229,255,.4),inset 0 0 20px rgba(0,229,255,.3)}
+.power-btn.active{background:#261805;border-color:#f59e0b;box-shadow:0 0 40px rgba(245,158,11,.4),inset 0 0 20px rgba(245,158,11,.25)}
 .power-icon{width:52px;height:52px;fill:none;stroke:#64748b;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:stroke .25s}
-.power-btn.active .power-icon{stroke:#00e5ff}
+.power-btn.active .power-icon{stroke:#f59e0b}
 .card{width:100%;background:#0d1117;border:1px solid #1e2638;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .card-header{display:flex;justify-content:space-between;align-items:center}
 .card-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8}
-.card-val{font-size:20px;font-weight:700;color:#00e5ff;font-variant-numeric:tabular-nums}
+.card-val{font-size:20px;font-weight:700;color:#f59e0b;font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;height:36px;-webkit-appearance:none;background:transparent;outline:none}
 input[type=range]::-webkit-slider-runnable-track{height:10px;background:#182030;border-radius:5px}
-input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearance:none;border-radius:50%;background:#fff;border:3px solid #00e5ff;box-shadow:0 2px 10px rgba(0,229,255,.5);margin-top:-9px;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearance:none;border-radius:50%;background:#fff;border:3px solid #f59e0b;box-shadow:0 2px 10px rgba(245,158,11,.5);margin-top:-9px;cursor:pointer}
 .presets{display:flex;gap:6px;width:100%}
-.preset-btn{flex:1;padding:8px 0;background:#161d2d;border:1px solid #232e48;color:#94a3b8;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer}
-.preset-btn:hover{color:#fff;border-color:#00e5ff}
+.preset-btn{flex:1;padding:8px 0;background:#161d2d;border:1px solid #232e48;color:#94a3b8;border-radius:10px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.preset-btn:hover{color:#fff;border-color:#f59e0b}
+.preset-btn.active{background:rgba(245,158,11,.2);border-color:#f59e0b;color:#f59e0b}
 .field-group{display:flex;flex-direction:column;gap:6px}
 .field-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8}
 .field-input{width:100%;padding:12px 14px;background:#161d2d;border:1px solid #232e48;border-radius:12px;color:#fff;font-size:14px;outline:none}
-.field-input:focus{border-color:#00e5ff}
+.field-input:focus{border-color:#f59e0b}
 .btn{width:100%;padding:12px;border-radius:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
-.btn-primary{background:#00e5ff;color:#000}
+.btn-primary{background:#f59e0b;color:#000}
 .btn-primary:active{transform:scale(.98)}
-.btn-secondary{background:#161d2d;border:1px solid #232e48;color:#00e5ff}
+.btn-secondary{background:#161d2d;border:1px solid #232e48;color:#f59e0b}
 .btn-danger{background:#dc2626;color:#fff}
 .alert-banner{padding:12px 14px;border-radius:14px;font-size:12px;line-height:1.4;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fbbf24}
 .alert-banner.success{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3);color:#34d399}
 .wifi-item{padding:10px 12px;border-radius:10px;background:#161d2d;border:1px solid #232e48;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13px}
-.wifi-item:hover{border-color:#00e5ff}
+.wifi-item:hover{border-color:#f59e0b}
 .nav{position:fixed;bottom:12px;width:calc(100% - 24px);max-width:440px;display:flex;justify-content:space-around;background:#0d1117;border:1px solid #1e2638;border-radius:18px;padding:8px 4px;box-shadow:0 10px 30px rgba(0,0,0,.8);z-index:90}
-.nav-btn{background:none;border:none;color:#64748b;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 12px;border-radius:10px}
-.nav-btn.active{color:#00e5ff}
+.nav-btn{background:none;border:none;color:#64748b;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 8px;border-radius:10px}
+.nav-btn.active{color:#f59e0b}
 .nav-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
 .modal-overlay.active{display:flex}
@@ -869,6 +870,16 @@ input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearanc
     </div>
   </div>
   <div class="card">
+    <div class="card-header"><span class="card-label">PWM Frequency</span><span id="fVal" class="card-val">5000 Hz</span></div>
+    <input type="range" id="fSlider" min="500" max="25000" step="500" value="5000" oninput="onFreq(this.value)">
+    <div class="presets">
+      <button class="preset-btn" onclick="setFreq(1000)">1 kHz</button>
+      <button class="preset-btn" onclick="setFreq(5000)">5 kHz</button>
+      <button class="preset-btn" onclick="setFreq(10000)">10 kHz</button>
+      <button class="preset-btn" onclick="setFreq(20000)">20 kHz</button>
+    </div>
+  </div>
+  <div class="card">
     <div class="card-header"><span class="card-label">Softness / Fade</span><span id="sVal" class="card-val">400ms</span></div>
     <input type="range" id="sSlider" min="0" max="3000" step="50" value="400" oninput="onSoft(this.value)">
     <div class="presets">
@@ -879,18 +890,51 @@ input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearanc
       <button class="preset-btn" onclick="setSoft(2000)">2000ms</button>
     </div>
   </div>
+</div>
+
+<!-- VIEW 2: TIMER & AUTOMATION -->
+<div id="view-timer" class="view">
   <div class="card">
-    <div class="card-header"><span class="card-label">PWM Frequency</span><span id="fVal" class="card-val">5000 Hz</span></div>
-    <div class="presets">
-      <button class="preset-btn" onclick="setFreq(1000)">1 kHz</button>
-      <button class="preset-btn" onclick="setFreq(5000)">5 kHz</button>
-      <button class="preset-btn" onclick="setFreq(10000)">10 kHz</button>
-      <button class="preset-btn" onclick="setFreq(20000)">20 kHz</button>
+    <div class="card-header"><span class="card-label">Hardware Countdown Timer</span><span id="tmrStateBadge" class="card-val" style="font-size:16px">Inactive</span></div>
+    <div id="tmrActiveBox" style="display:none;background:#161d2d;border-radius:14px;padding:14px;text-align:center">
+      <div style="font-size:28px;font-weight:800;color:#f59e0b;font-family:monospace" id="tmrClock">00:00:00</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px" id="tmrActionText">Target: Turn OFF</div>
+      <button type="button" class="btn btn-danger" style="margin-top:12px;padding:8px" onclick="cancelTimer()">Cancel Timer</button>
     </div>
+    <div id="tmrSetupBox">
+      <div class="field-group" style="margin-bottom:10px">
+        <label class="field-label">Target Action</label>
+        <div style="display:flex;gap:6px">
+          <button type="button" id="btnTmrOff" class="preset-btn active" onclick="setTmrTarget('off')">Turn OFF</button>
+          <button type="button" id="btnTmrOn" class="preset-btn" onclick="setTmrTarget('on')">Turn ON</button>
+        </div>
+      </div>
+      <label class="field-label">Quick Presets</label>
+      <div class="presets" style="flex-wrap:wrap">
+        <button class="preset-btn" onclick="startTimerMins(5)">5m</button>
+        <button class="preset-btn" onclick="startTimerMins(15)">15m</button>
+        <button class="preset-btn" onclick="startTimerMins(30)">30m</button>
+        <button class="preset-btn" onclick="startTimerMins(45)">45m</button>
+        <button class="preset-btn" onclick="startTimerMins(60)">1h</button>
+        <button class="preset-btn" onclick="startTimerMins(120)">2h</button>
+      </div>
+      <div class="field-group" style="margin-top:12px">
+        <label class="field-label">Custom Duration (Minutes)</label>
+        <div style="display:flex;gap:6px">
+          <input type="number" id="tmrCustomMin" min="1" max="1440" value="20" class="field-input">
+          <button type="button" class="btn btn-primary" style="width:auto;padding:0 20px" onclick="startCustomTimer()">Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-label">Bedtime & Morning Automations</span></div>
+    <button type="button" class="btn btn-secondary" onclick="startTimerMins(30, 'off')">🌙 Bedtime Auto-Off (30 Min)</button>
+    <button type="button" class="btn btn-secondary" onclick="startTimerMins(15, 'on')">🌅 Morning Delayed-On (15 Min)</button>
   </div>
 </div>
 
-<!-- VIEW 2: WI-FI SETUP -->
+<!-- VIEW 3: WI-FI SETUP -->
 <div id="view-wifi" class="view">
   <div id="wifiBanner" class="alert-banner">
     ESP32 Setup Hotspot Active (192.168.4.1). Connect to your 2.4 GHz home Wi-Fi network below.
@@ -914,7 +958,7 @@ input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearanc
   </div>
 </div>
 
-<!-- VIEW 3: SYSTEM & OTA -->
+<!-- VIEW 4: SYSTEM & OTA -->
 <div id="view-system" class="view">
   <div class="card">
     <div class="card-header"><span class="card-label">Hardware Configuration</span></div>
@@ -955,22 +999,26 @@ input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearanc
 <div class="nav">
   <button class="nav-btn active" id="btn-tab-control" onclick="showTab('control')">
     <svg viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
-    Control
+    Light
+  </button>
+  <button class="nav-btn" id="btn-tab-timer" onclick="showTab('timer')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+    Timer
   </button>
   <button class="nav-btn" id="btn-tab-wifi" onclick="showTab('wifi')">
     <svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
-    Wi-Fi Setup
+    Wi-Fi
   </button>
   <button class="nav-btn" id="btn-tab-system" onclick="showTab('system')">
     <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
-    System
+    Settings
   </button>
 </div>
 
 <!-- REBOOT MODAL -->
 <div id="modal" class="modal-overlay">
   <div class="modal-box">
-    <h3 style="font-size:18px;color:#00e5ff">Reconnecting ESP32...</h3>
+    <h3 style="font-size:18px;color:#f59e0b">Reconnecting ESP32...</h3>
     <p id="modalMsg" style="font-size:13px;color:#94a3b8;line-height:1.5">
       Connecting to your home Wi-Fi network. Reconnect your phone/PC to your home Wi-Fi and open http://pwm.local
     </p>
@@ -983,6 +1031,7 @@ let hasAutoSwitched = false;
 let isDragging = false;
 let isFetching = false;
 let sysFieldsLoaded = false;
+let tmrTargetAction = 'off';
 
 const showTab = (tab) => {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -991,6 +1040,13 @@ const showTab = (tab) => {
   const targetBtn = document.getElementById('btn-tab-' + tab);
   if (targetView) targetView.classList.add('active');
   if (targetBtn) targetBtn.classList.add('active');
+};
+
+const formatSeconds = (s) => {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
 };
 
 const fetchState = () => {
@@ -1013,8 +1069,30 @@ const fetchState = () => {
         document.getElementById('bSlider').value = d.brightness;
         document.getElementById('sVal').innerText = d.softness + 'ms';
         document.getElementById('sSlider').value = d.softness;
+        document.getElementById('fVal').innerText = d.frequency + ' Hz';
+        const fSlider = document.getElementById('fSlider');
+        if (fSlider) fSlider.value = d.frequency;
       }
-      document.getElementById('fVal').innerText = d.frequency + ' Hz';
+
+      // Update timer UI
+      if (d.timer) {
+        const badge = document.getElementById('tmrStateBadge');
+        const activeBox = document.getElementById('tmrActiveBox');
+        const setupBox = document.getElementById('tmrSetupBox');
+        if (d.timer.active) {
+          badge.innerText = 'Active';
+          badge.style.color = '#f59e0b';
+          activeBox.style.display = 'block';
+          setupBox.style.display = 'none';
+          document.getElementById('tmrClock').innerText = formatSeconds(d.timer.remainingSec);
+          document.getElementById('tmrActionText').innerText = 'Target: Turn ' + d.timer.action.toUpperCase();
+        } else {
+          badge.innerText = 'Inactive';
+          badge.style.color = '#94a3b8';
+          activeBox.style.display = 'none';
+          setupBox.style.display = 'block';
+        }
+      }
 
       if (d.settings) {
         document.getElementById('ipBadge').innerText = d.settings.ip || 'ESP32-C3';
@@ -1091,6 +1169,35 @@ const setBright = (v) => {
   onBright(v);
 };
 
+let fTimer = null;
+let pendingFreq = null;
+const onFreq = (v) => {
+  v = Math.max(500, Math.min(25000, parseInt(v, 10)));
+  document.getElementById('fVal').innerText = v + ' Hz';
+  pendingFreq = v;
+  isDragging = true;
+
+  if (fTimer) clearTimeout(fTimer);
+  fTimer = setTimeout(() => {
+    isDragging = false;
+    if (pendingFreq !== null) {
+      const sendVal = pendingFreq;
+      pendingFreq = null;
+      fetch('/api/frequency', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ frequency: sendVal })
+      }).catch(() => {});
+    }
+  }, 150);
+};
+
+const setFreq = (v) => {
+  const fSlider = document.getElementById('fSlider');
+  if (fSlider) fSlider.value = v;
+  onFreq(v);
+};
+
 let sTimer = null;
 let pendingSoftness = null;
 const onSoft = (v) => {
@@ -1119,12 +1226,38 @@ const setSoft = (v) => {
   onSoft(v);
 };
 
-const setFreq = (v) => {
-  document.getElementById('fVal').innerText = v + ' Hz';
-  fetch('/api/frequency', {
+// Timer functions
+const setTmrTarget = (act) => {
+  tmrTargetAction = act;
+  document.getElementById('btnTmrOff').className = 'preset-btn ' + (act === 'off' ? 'active' : '');
+  document.getElementById('btnTmrOn').className = 'preset-btn ' + (act === 'on' ? 'active' : '');
+};
+
+const startTimerMins = (mins, action) => {
+  const act = action || tmrTargetAction;
+  fetch('/api/timer', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ frequency: v })
+    body:JSON.stringify({ durationSec: mins * 60, action: act })
+  }).then(r => r.json()).then(d => {
+    curState = d;
+    fetchState();
+  }).catch(() => {});
+};
+
+const startCustomTimer = () => {
+  const mins = parseInt(document.getElementById('tmrCustomMin').value, 10) || 15;
+  startTimerMins(mins);
+};
+
+const cancelTimer = () => {
+  fetch('/api/timer', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ cancel: true })
+  }).then(r => r.json()).then(d => {
+    curState = d;
+    fetchState();
   }).catch(() => {});
 };
 

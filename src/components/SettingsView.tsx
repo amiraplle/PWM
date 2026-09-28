@@ -163,8 +163,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="w-full flex flex-col items-center gap-5 pb-8">
       {/* Toast Alert */}
       {saveToast && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-cyan-950 border border-cyan-400 text-cyan-200 text-xs font-semibold flex items-center gap-2 shadow-2xl animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-amber-950 border border-amber-400 text-amber-200 text-xs font-semibold flex items-center gap-2 shadow-2xl animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4 text-amber-400" />
           Settings saved to ESP32 Preferences (NVS)!
         </div>
       )}
@@ -172,7 +172,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Target Host & Connection Mode */}
       <div className="w-full bg-gray-950/80 border border-gray-800/90 rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col gap-4 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
             <Network className="w-4 h-4" />
           </div>
           <div>
@@ -190,7 +190,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 value={hostInput}
                 onChange={(e) => setHostInput(e.target.value)}
                 placeholder="http://pwm.local or http://192.168.1.185"
-                className="flex-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                className="flex-1 bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
               />
               <button
                 type="button"
@@ -199,13 +199,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   setSaveToast(true);
                   setTimeout(() => setSaveToast(false), 2000);
                 }}
-                className="px-3 py-2 rounded-xl bg-cyan-500/20 border border-cyan-500/50 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/30 cursor-pointer"
+                className="px-3 py-2 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-300 text-xs font-semibold hover:bg-amber-500/30 cursor-pointer"
               >
                 Apply
               </button>
             </div>
             <p className="text-[10px] text-gray-500 mt-1">
-              Accessible via mDNS as <code className="text-cyan-400">http://pwm.local</code> or the device's assigned local IP.
+              Accessible via mDNS as <code className="text-amber-400">http://pwm.local</code> or the device's assigned local IP.
             </p>
           </div>
 
@@ -220,7 +220,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               type="button"
               onClick={() => onToggleProxy(!useProxy)}
               className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                useProxy ? 'bg-cyan-500' : 'bg-gray-800'
+                useProxy ? 'bg-amber-500' : 'bg-gray-800'
               }`}
             >
               <div
@@ -239,7 +239,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         className="w-full bg-gray-950/80 border border-gray-800/90 rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col gap-4 backdrop-blur-md"
       >
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
             <Sliders className="w-4 h-4" />
           </div>
           <div>
@@ -254,7 +254,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <select
               value={gpioInput}
               onChange={(e) => setGpioInput(parseInt(e.target.value, 10))}
-              className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+              className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-amber-300 focus:outline-none focus:border-amber-500"
             >
               <option value={4}>GPIO 4 (Default)</option>
               <option value={0}>GPIO 0 (Strapping/Boot)</option>
@@ -282,7 +282,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 value={mdnsInput}
                 onChange={(e) => setMdnsInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                 placeholder="pwm"
-                className="w-full bg-transparent text-xs font-mono text-cyan-300 focus:outline-none"
+                className="w-full bg-transparent text-xs font-mono text-amber-300 focus:outline-none"
               />
               <span className="text-[10px] text-gray-500 font-mono">.local</span>
             </div>
@@ -293,7 +293,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div className="pt-2 border-t border-gray-900">
           <label className="text-xs text-gray-400 mb-1.5 flex items-center justify-between">
             <span>Dimming Curve Algorithm</span>
-            <span className="text-[10px] text-cyan-400 font-mono">
+            <span className="text-[10px] text-amber-400 font-mono">
               {curveInput === 1 ? 'CIE 1931 Eye Curve (Recommended)' : 'Linear 1:1 Direct'}
             </span>
           </label>
@@ -303,7 +303,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               onClick={() => setCurveInput(1)}
               className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                 curveInput === 1
-                  ? 'bg-cyan-500/15 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                  ? 'bg-amber-500/15 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
                   : 'bg-gray-900/80 border-gray-800 text-gray-400 hover:text-white'
               }`}
             >
@@ -317,7 +317,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               onClick={() => setCurveInput(0)}
               className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                 curveInput === 0
-                  ? 'bg-cyan-500/15 border-cyan-400 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.25)]'
+                  ? 'bg-amber-500/15 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
                   : 'bg-gray-900/80 border-gray-800 text-gray-400 hover:text-white'
               }`}
             >
@@ -337,7 +337,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               value={wifiSsidInput}
               onChange={(e) => setWifiSsidInput(e.target.value)}
               placeholder="Your 2.4GHz Wi-Fi Name"
-              className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500"
+              className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
             />
           </div>
 
@@ -348,7 +348,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               value={wifiPassInput}
               onChange={(e) => setWifiPassInput(e.target.value)}
               placeholder="Leave blank to keep current password"
-              className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-cyan-500"
+              className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
             />
           </div>
         </div>
@@ -356,7 +356,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <button
           type="submit"
           disabled={isUpdating}
-          className="w-full mt-2 py-3 rounded-2xl bg-cyan-500/20 border border-cyan-400/80 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 hover:bg-cyan-500/30 active:scale-98 transition-all cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+          className="w-full mt-2 py-3 rounded-2xl bg-amber-500/20 border border-amber-400/80 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 hover:bg-amber-500/30 active:scale-98 transition-all cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.2)]"
         >
           Save Settings to Preferences / NVS
         </button>
@@ -375,7 +375,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="border-2 border-dashed border-gray-800 rounded-2xl p-4 text-center hover:border-cyan-500/50 transition-colors">
+          <div className="border-2 border-dashed border-gray-800 rounded-2xl p-4 text-center hover:border-amber-500/50 transition-colors">
             <input
               type="file"
               accept=".bin"
@@ -388,7 +388,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className="flex flex-col items-center cursor-pointer gap-2"
             >
               <UploadCloud className="w-8 h-8 text-gray-500" />
-              <span className="text-xs font-semibold text-cyan-400">
+              <span className="text-xs font-semibold text-amber-400">
                 {otaFile ? otaFile.name : 'Select compiled firmware binary (.bin)'}
               </span>
               <span className="text-[10px] text-gray-500">
@@ -416,12 +416,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {isUploading && (
             <div className="flex flex-col gap-1.5">
               <div className="flex justify-between text-xs font-mono">
-                <span className="text-cyan-400">{otaStatus}</span>
+                <span className="text-amber-400">{otaStatus}</span>
                 <span className="text-white font-bold">{otaProgress}%</span>
               </div>
               <div className="w-full h-2 bg-gray-900 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-cyan-400 transition-all duration-300 shadow-[0_0_10px_#06b6d4]"
+                  className="h-full bg-amber-400 transition-all duration-300 shadow-[0_0_10px_#f59e0b]"
                   style={{ width: `${otaProgress}%` }}
                 />
               </div>
@@ -463,7 +463,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
           <div className="p-2.5 rounded-xl bg-gray-900/80 border border-gray-800/80">
             <span className="text-[10px] text-gray-500 block">Free Heap RAM</span>
-            <span className="text-cyan-300 font-semibold">
+            <span className="text-amber-300 font-semibold">
               {settings.freeHeap > 0 ? `${(settings.freeHeap / 1024).toFixed(1)} KB` : '—'}
             </span>
           </div>

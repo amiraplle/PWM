@@ -72,7 +72,7 @@ export const FirmwareView: React.FC = () => {
       <div className="w-full bg-gray-950/80 border border-gray-800/90 rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col gap-3 backdrop-blur-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+            <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
               <FileCode className="w-4 h-4" />
             </div>
             <div>
@@ -89,7 +89,7 @@ export const FirmwareView: React.FC = () => {
               href="/api/firmware/download-workflow"
               download="build-esp32.yml"
               title="Download GitHub Actions CI/CD Workflow"
-              className="px-2.5 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400/80 text-cyan-300 text-xs font-semibold hover:bg-cyan-500/30 flex items-center gap-1 transition-all"
+              className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/80 text-amber-300 text-xs font-semibold hover:bg-amber-500/30 flex items-center gap-1 transition-all"
             >
               <GitBranch className="w-3.5 h-3.5" />
               Workflow .YML
@@ -119,7 +119,7 @@ export const FirmwareView: React.FC = () => {
             onClick={() => setActiveCodeTab('workflow')}
             className={`py-2 px-1 rounded-xl font-semibold transition-all cursor-pointer text-center ${
               activeCodeTab === 'workflow'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -129,7 +129,7 @@ export const FirmwareView: React.FC = () => {
             onClick={() => setActiveCodeTab('flashing')}
             className={`py-2 px-1 rounded-xl font-semibold transition-all cursor-pointer text-center ${
               activeCodeTab === 'flashing'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -139,7 +139,7 @@ export const FirmwareView: React.FC = () => {
             onClick={() => setActiveCodeTab('wiring')}
             className={`py-2 px-1 rounded-xl font-semibold transition-all cursor-pointer text-center ${
               activeCodeTab === 'wiring'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -149,7 +149,7 @@ export const FirmwareView: React.FC = () => {
             onClick={() => setActiveCodeTab('ino')}
             className={`py-2 px-1 rounded-xl font-semibold transition-all cursor-pointer text-center ${
               activeCodeTab === 'ino'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -159,7 +159,7 @@ export const FirmwareView: React.FC = () => {
             onClick={() => setActiveCodeTab('platformio')}
             className={`py-2 px-1 rounded-xl font-semibold transition-all cursor-pointer text-center ${
               activeCodeTab === 'platformio'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -169,7 +169,7 @@ export const FirmwareView: React.FC = () => {
             onClick={() => setActiveCodeTab('merge_bin')}
             className={`py-2 px-1 rounded-xl font-semibold transition-all cursor-pointer text-center ${
               activeCodeTab === 'merge_bin'
-                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/80 shadow-[0_0_8px_rgba(6,182,212,0.3)]'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-400/80 shadow-[0_0_8px_rgba(245,158,11,0.25)]'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
@@ -185,7 +185,7 @@ export const FirmwareView: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
-                  <GitBranch className="w-4 h-4 text-cyan-400" />
+                  <GitBranch className="w-4 h-4 text-amber-400" />
                   GitHub Actions CI/CD (.github/workflows/build-esp32.yml)
                 </h3>
                 <p className="text-[11px] text-gray-400 mt-0.5">
@@ -196,20 +196,20 @@ export const FirmwareView: React.FC = () => {
                 onClick={() => handleCopy(sourceCode.workflowCode)}
                 className="px-3 py-1.5 rounded-xl bg-gray-900 border border-gray-800 text-xs font-semibold text-gray-300 hover:text-white flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-cyan-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Copy className="w-3.5 h-3.5" />}
                 Copy YML
               </button>
             </div>
 
             {/* Artifacts Summary Card */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-              <div className="p-3 rounded-2xl bg-cyan-950/30 border border-cyan-800/40">
-                <span className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-800/40">
+                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
                   1. Merged Factory Binary (0x0)
                 </span>
                 <p className="text-[11px] text-gray-400 mt-1">
-                  <code className="text-cyan-400 font-mono">esp32c3_cob_pwm_merged_factory_0x0.bin</code>
+                  <code className="text-amber-400 font-mono">esp32c3_cob_pwm_merged_factory_0x0.bin</code>
                   <br />
                   Single all-in-one file containing bootloader, partitions, boot_app0, and firmware. Flash directly at offset <strong>0x0</strong>.
                 </p>
@@ -245,8 +245,8 @@ export const FirmwareView: React.FC = () => {
           {/* Method A: Merged Factory Bin */}
           <div className="w-full bg-gray-950/80 border border-gray-800/90 rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col gap-3 backdrop-blur-md">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-cyan-300 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-400" />
                 Method 1: 1-Click Flash with Merged Factory Binary (Recommended)
               </h3>
               <button
@@ -264,7 +264,7 @@ export const FirmwareView: React.FC = () => {
             <p className="text-xs text-gray-400">
               The merged binary bundles the bootloader, partition table, boot_app0, and application into a single file at address <strong>0x0</strong>.
             </p>
-            <div className="p-3 rounded-2xl bg-black border border-gray-900 font-mono text-xs text-cyan-300 overflow-x-auto">
+            <div className="p-3 rounded-2xl bg-black border border-gray-900 font-mono text-xs text-amber-300 overflow-x-auto">
               esptool.py --chip esp32c3 --baud 921600 write_flash 0x0 esp32c3_cob_pwm_merged_factory_0x0.bin
             </div>
           </div>
@@ -307,7 +307,7 @@ export const FirmwareView: React.FC = () => {
               Method 3: Over-The-Air (OTA) Web Update (No Cables)
             </h3>
             <p className="text-xs text-gray-400">
-              After initial flashing, you never need a USB cable again. Go to <strong>Settings &amp; OTA</strong> tab in this web app, drag and drop <code className="text-cyan-400">0x10000_esp32c3_cob_pwm.bin</code> (or <code className="text-cyan-400">firmware_ota.bin</code>), and click Upload.
+              After initial flashing, you never need a USB cable again. Go to <strong>Settings &amp; OTA</strong> tab in this web app, drag and drop <code className="text-amber-400">0x10000_esp32c3_cob_pwm.bin</code> (or <code className="text-amber-400">firmware_ota.bin</code>), and click Upload.
             </p>
           </div>
         </div>
@@ -318,7 +318,7 @@ export const FirmwareView: React.FC = () => {
         <div className="w-full flex flex-col gap-4">
           <div className="w-full bg-gray-950/80 border border-gray-800/90 rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col gap-4 backdrop-blur-md">
             <h3 className="text-sm font-bold text-gray-200 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-cyan-400" />
+              <Layers className="w-4 h-4 text-amber-400" />
               MOSFET &amp; COB Hardware Schematic
             </h3>
 
@@ -344,7 +344,7 @@ export const FirmwareView: React.FC = () => {
 
             <div className="flex flex-col gap-2.5 text-xs">
               <div className="p-3 rounded-xl bg-gray-900/60 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-cyan-950 text-cyan-400 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                <span className="w-5 h-5 rounded-full bg-amber-950 text-amber-400 font-bold flex items-center justify-center shrink-0 text-[10px]">
                   1
                 </span>
                 <div>
@@ -355,7 +355,7 @@ export const FirmwareView: React.FC = () => {
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-gray-900/60 border border-gray-800/80 flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-cyan-950 text-cyan-400 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                <span className="w-5 h-5 rounded-full bg-amber-950 text-amber-400 font-bold flex items-center justify-center shrink-0 text-[10px]">
                   2
                 </span>
                 <div>
@@ -374,7 +374,7 @@ export const FirmwareView: React.FC = () => {
       {(activeCodeTab === 'ino' || activeCodeTab === 'platformio' || activeCodeTab === 'merge_bin') && (
         <div className="w-full bg-gray-950/80 border border-gray-800/90 rounded-3xl p-5 shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex flex-col gap-3 backdrop-blur-md">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-cyan-400">
+            <span className="text-xs font-mono text-amber-400">
               {activeCodeTab === 'ino'
                 ? 'esp32c3_cob_pwm.ino'
                 : activeCodeTab === 'platformio'
@@ -387,7 +387,7 @@ export const FirmwareView: React.FC = () => {
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-cyan-400" />
+                  <Check className="w-3.5 h-3.5 text-amber-400" />
                   Copied!
                 </>
               ) : (
