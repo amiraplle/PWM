@@ -1217,19 +1217,11 @@ void setup() {
   initPwmHardware();
   Serial.println("[INIT] Hardware LEDC PWM initialized.");
 
-  // 3. Initialize Wi-Fi (Disable sleep / power-saving for 24/7 responsiveness)
+  // 3. Initialize Wi-Fi and mDNS
   connectWiFi();
   Serial.println("[INIT] Wi-Fi started with zero power-saving sleep.");
 
-  // 4. Initialize mDNS (Only when connected to Wi-Fi network)
-  if (WiFi.status() == WL_CONNECTED) {
-    if (MDNS.begin(state.mdnsHost)) {
-      Serial.printf("[INIT] mDNS responder active: http://%s.local\n", state.mdnsHost);
-      MDNS.addService("http", "tcp", 80);
-    }
-  }
-
-  // 5. Configure REST API & OTA endpoints
+  // 4. Configure REST API & OTA endpoints
   server.on("/", HTTP_GET, handleRoot);
   server.on("/favicon.ico", HTTP_GET, []() { server.send(204); });
 
