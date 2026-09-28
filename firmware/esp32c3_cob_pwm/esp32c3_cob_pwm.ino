@@ -335,6 +335,9 @@ void saveSettingsToNVSDebounced() {
   if (strlen(state.wifiSsid) > 0) {
     prefs.putString("ssid", state.wifiSsid);
     prefs.putString("pass", state.wifiPass);
+  } else {
+    prefs.putString("ssid", "");
+    prefs.putString("pass", "");
   }
   prefs.end();
 
@@ -372,41 +375,52 @@ void processTimerLoop() {
 // -------------------------------------------------------------
 void connectWiFi() {
   WiFi.persistent(false);
-  WiFi.disconnect(true);
-  delay(100);
+  WiFi.setAutoReconnect(true);
 
-  // If credentials are saved, attempt Station mode connection first
+  // If credentials are saved, shut down own AP completely and connect to home Wi-Fi indefinitely
   if (strlen(state.wifiSsid) > 0) {
-    Serial.printf("\n[WIFI] Found configured SSID: '%s'\n", state.wifiSsid);
-    Serial.println("[WIFI] Connecting to Wi-Fi Network...");
+    Serial.printf("\n[WIFI] Stored SSID found: '%s'\n", state.wifiSsid);
+    Serial.println("[WIFI] Shutting down setup AP and connecting to home Wi-Fi indefinitely...");
+    
+    // Shut down Access Point completely so ESP32-COB-PWM SSID disappears
+    WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_STA);
     WiFi.setTxPower(WIFI_POWER_19_5dBm);
     WiFi.begin(state.wifiSsid, state.wifiPass);
 
-    unsigned long startAttempt = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < 8000) {
-      delay(250);
-      Serial.print(".");
+    unsigned long dotMillis = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(200);
+      processFadeLoop();
+      if (millis() - dotMillis > 1000) {
+        dotMillis = millis();
+        Serial.print(".");
+      }
     }
     Serial.println();
 
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("[WIFI] >>> SUCCESS: Connected to Home Wi-Fi! <<<");
-      Serial.print  ("[WIFI] IP Address: "); Serial.println(WiFi.localIP());
-      Serial.print  ("[WIFI] Web UI:     http://"); Serial.println(WiFi.localIP());
-      WiFi.setSleep(false);
-      esp_wifi_set_ps(WIFI_PS_NONE);
-      return;
-    }
+    Serial.println("==================================================");
+    Serial.println("[WIFI] >>> CONNECTED TO HOME WI-FI! <<<");
+    Serial.print  ("[WIFI] Network Name (SSID): "); Serial.println(state.wifiSsid);
+    Serial.print  ("[WIFI] Assigned IP Address:  "); Serial.println(WiFi.localIP());
+    Serial.print  ("[WIFI] Web Dashboard URL:   http://"); Serial.println(WiFi.localIP());
 
-    Serial.println("[WIFI] WARNING: Could not connect to stored Wi-Fi within 8 seconds.");
-    Serial.println("[WIFI] Starting Fallback Setup Access Point so you can reconfigure...");
-  } else {
-    Serial.println("\n[WIFI] No Wi-Fi credentials stored in flash.");
-    Serial.println("[WIFI] Starting Setup Access Point...");
+    // Activate .local mDNS responder immediately
+    if (MDNS.begin(state.mdnsHost)) {
+      MDNS.addService("http", "tcp", 80);
+      Serial.printf("[WIFI] mDNS Domain Active:   http://%s.local\n", state.mdnsHost);
+    }
+    Serial.println("==================================================\n");
+
+    WiFi.setSleep(false);
+    esp_wifi_set_ps(WIFI_PS_NONE);
+    return;
   }
 
-  // Access Point Mode (Channel 1, standard 192.168.4.1 subnet)
+  // NO credentials saved: Run Setup Access Point indefinitely waiting for user configuration
+  Serial.println("\n[WIFI] No Wi-Fi credentials stored in flash.");
+  Serial.println("[WIFI] Running Setup Access Point indefinitely until credentials are provided...");
+
   WiFi.mode(WIFI_AP);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   
@@ -415,7 +429,7 @@ void connectWiFi() {
   IPAddress subnet(255, 255, 255, 0);
   WiFi.softAPConfig(apIP, gateway, subnet);
   
-  bool apSuccess = WiFi.softAP("ESP32-COB-PWM");
+  WiFi.softAP("ESP32-COB-PWM");
   delay(100);
 
   // Keep radio awake for 24/7 web server responsiveness
@@ -423,18 +437,11 @@ void connectWiFi() {
   esp_wifi_set_ps(WIFI_PS_NONE);
 
   Serial.println("==================================================");
-  if (apSuccess) {
-    Serial.println("[WIFI] >>> ACCESS POINT ACTIVE & BROADCASTING <<<");
-    Serial.println("[WIFI] Network Name (SSID): ESP32-COB-PWM");
-    Serial.println("[WIFI] Security:            Open (No password required)");
-    Serial.print  ("[WIFI] AP IP Address:      "); Serial.println(WiFi.softAPIP());
-    Serial.println("[WIFI] Controller URL:      http://192.168.4.1");
-  } else {
-    Serial.println("[WIFI] Retrying Access Point setup...");
-    delay(300);
-    WiFi.softAP("ESP32-COB-PWM");
-    Serial.print  ("[WIFI] AP IP:               "); Serial.println(WiFi.softAPIP());
-  }
+  Serial.println("[WIFI] >>> ACCESS POINT ACTIVE (WAITING FOR CONFIG) <<<");
+  Serial.println("[WIFI] Network Name (SSID): ESP32-COB-PWM");
+  Serial.println("[WIFI] Security:            Open (No password required)");
+  Serial.print  ("[WIFI] Setup IP Address:    "); Serial.println(WiFi.softAPIP());
+  Serial.println("[WIFI] Setup URL:           http://192.168.4.1");
   Serial.println("==================================================\n");
 }
 
@@ -442,8 +449,9 @@ void checkWiFiReconnect() {
   if (millis() - lastWifiCheckMillis < WIFI_CHECK_INTERVAL) return;
   lastWifiCheckMillis = millis();
 
-  // If configured as STA and disconnected, reconnect non-blockingly
-  if (strlen(state.wifiSsid) > 0 && WiFi.getMode() == WIFI_STA && WiFi.status() != WL_CONNECTED) {
+  // If credentials are configured, ensure we stay connected to home Wi-Fi
+  if (strlen(state.wifiSsid) > 0 && WiFi.status() != WL_CONNECTED) {
+    Serial.println("[WIFI] Connection lost. Reconnecting to home Wi-Fi...");
     WiFi.reconnect();
   }
 }
@@ -1213,10 +1221,12 @@ void setup() {
   connectWiFi();
   Serial.println("[INIT] Wi-Fi started with zero power-saving sleep.");
 
-  // 4. Initialize mDNS
-  if (MDNS.begin(state.mdnsHost)) {
-    Serial.printf("[INIT] mDNS responder started: http://%s.local\n", state.mdnsHost);
-    MDNS.addService("http", "tcp", 80);
+  // 4. Initialize mDNS (Only when connected to Wi-Fi network)
+  if (WiFi.status() == WL_CONNECTED) {
+    if (MDNS.begin(state.mdnsHost)) {
+      Serial.printf("[INIT] mDNS responder active: http://%s.local\n", state.mdnsHost);
+      MDNS.addService("http", "tcp", 80);
+    }
   }
 
   // 5. Configure REST API & OTA endpoints
