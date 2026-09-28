@@ -31,7 +31,6 @@
 #include <ESPmDNS.h>
 #include <Preferences.h>
 #include <Update.h>
-#include <DNSServer.h>
 #include "esp_wifi.h"
 
 // Forward Declarations for standard C++ compilation
@@ -40,10 +39,9 @@ void setHardwarePwmDuty(uint32_t duty);
 void updateHardwareFade();
 void loadSettingsFromNVS();
 void saveStateToNVS();
-void setupWiFi();
-void checkWiFiConnection();
+void connectWiFi();
+void checkWiFiReconnect();
 void handleRoot();
-void handleCaptivePortal();
 void handleNotFound();
 void handleApiState();
 void handleApiPower();
@@ -57,10 +55,6 @@ void handleApiReboot();
 void handleApiSerialLogs();
 void handleGetWifiScan();
 uint32_t calculatePhysicalDuty(uint8_t percent);
-
-// Captive Portal DNS Server (answers all domain queries on port 53 with 192.168.4.1)
-DNSServer dnsServer;
-const byte DNS_PORT = 53;
 
 // -------------------------------------------------------------
 // Pin & LEDC Configuration
@@ -378,7 +372,7 @@ void processTimerLoop() {
 // -------------------------------------------------------------
 void connectWiFi() {
   WiFi.persistent(false);
-  WiFi.disconnect(true, true);
+  WiFi.disconnect(true);
   delay(100);
 
   // If credentials are saved, attempt Station mode connection first
@@ -397,7 +391,6 @@ void connectWiFi() {
     Serial.println();
 
     if (WiFi.status() == WL_CONNECTED) {
-      dnsServer.stop();
       Serial.println("[WIFI] >>> SUCCESS: Connected to Home Wi-Fi! <<<");
       Serial.print  ("[WIFI] IP Address: "); Serial.println(WiFi.localIP());
       Serial.print  ("[WIFI] Web UI:     http://"); Serial.println(WiFi.localIP());
@@ -413,31 +406,17 @@ void connectWiFi() {
     Serial.println("[WIFI] Starting Setup Access Point...");
   }
 
-  // Pure Access Point Mode
-  WiFi.disconnect(true, true);
-  delay(100);
+  // Access Point Mode (Channel 1, standard 192.168.4.1 subnet)
   WiFi.mode(WIFI_AP);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
   
-  // Listen for station connection and DHCP assignment events
-  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
-    if (event == ARDUINO_EVENT_WIFI_AP_STACONNECTED) {
-      Serial.println("[AP] Client device connected to ESP32-COB-PWM");
-    } else if (event == ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED) {
-      Serial.print("[AP] Client assigned IP by DHCP: ");
-      Serial.println(IPAddress(info.wifi_ap_staipassigned.ip.addr));
-    }
-  });
-
-  // Start open Access Point with default ESP-IDF DHCP server (192.168.4.1, pool 192.168.4.2-10)
+  IPAddress apIP(192, 168, 4, 1);
+  IPAddress gateway(192, 168, 4, 1);
+  IPAddress subnet(255, 255, 255, 0);
+  WiFi.softAPConfig(apIP, gateway, subnet);
+  
   bool apSuccess = WiFi.softAP("ESP32-COB-PWM");
   delay(100);
-
-  // Captive Portal DNS server (intercepts all DNS queries on port 53 and resolves to 192.168.4.1)
-  IPAddress apIP = WiFi.softAPIP();
-  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
-  dnsServer.start(DNS_PORT, "*", apIP);
-  Serial.println("[INIT] Captive Portal DNS server active on UDP port 53.");
 
   // Keep radio awake for 24/7 web server responsiveness
   WiFi.setSleep(false);
@@ -448,7 +427,7 @@ void connectWiFi() {
     Serial.println("[WIFI] >>> ACCESS POINT ACTIVE & BROADCASTING <<<");
     Serial.println("[WIFI] Network Name (SSID): ESP32-COB-PWM");
     Serial.println("[WIFI] Security:            Open (No password required)");
-    Serial.print  ("[WIFI] Gateway / AP IP:     "); Serial.println(WiFi.softAPIP());
+    Serial.print  ("[WIFI] AP IP Address:      "); Serial.println(WiFi.softAPIP());
     Serial.println("[WIFI] Controller URL:      http://192.168.4.1");
   } else {
     Serial.println("[WIFI] Retrying Access Point setup...");
@@ -1200,14 +1179,6 @@ void handleCaptivePortal() {
 }
 
 void handleNotFound() {
-  if (WiFi.getMode() == WIFI_AP) {
-    String host = server.hostHeader();
-    if (host != "192.168.4.1" && host != "pwm.local") {
-      server.sendHeader("Location", "http://192.168.4.1/", true);
-      server.send(302, "text/plain", "");
-      return;
-    }
-  }
   server.send(404, "text/plain", "Not Found");
 }
 
@@ -1250,13 +1221,6 @@ void setup() {
 
   // 5. Configure REST API & OTA endpoints
   server.on("/", HTTP_GET, handleRoot);
-  server.on("/hotspot-detect.html", HTTP_GET, handleRoot);     // Apple iOS captive portal test
-  server.on("/generate_204", HTTP_GET, handleCaptivePortal);    // Android captive portal test
-  server.on("/gen_204", HTTP_GET, handleCaptivePortal);         // Android captive portal test
-  server.on("/ncsi.txt", HTTP_GET, handleCaptivePortal);        // Windows captive portal test
-  server.on("/connecttest.txt", HTTP_GET, handleCaptivePortal); // Windows captive portal test
-  server.on("/redirect", HTTP_GET, handleCaptivePortal);
-  server.on("/canonical.html", HTTP_GET, handleRoot);
   server.on("/favicon.ico", HTTP_GET, []() { server.send(204); });
 
   server.on("/api/state", HTTP_GET, handleGetState);
@@ -1281,7 +1245,7 @@ void setup() {
   // Web OTA upload handler
   server.on("/update", HTTP_POST, handleOtaFinish, handleOtaUpload);
 
-  // Catch-all handler for captive portal redirection
+  // Catch-all 404 handler
   server.onNotFound(handleNotFound);
 
   server.begin();
@@ -1289,11 +1253,6 @@ void setup() {
 }
 
 void loop() {
-  // Captive Portal DNS processing (resolves all domains to 192.168.4.1 in AP mode)
-  if (WiFi.getMode() == WIFI_AP) {
-    dnsServer.processNextRequest();
-  }
-
   // Non-blocking processing routines (Continuous 24/7 operation)
   server.handleClient();
   processFadeLoop();
