@@ -56,6 +56,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [gpioInput, setGpioInput] = useState(settings.pwmGpio || 4);
   const [curveInput, setCurveInput] = useState(curveMode);
 
+  // Sync inputs when settings load from ESP32
+  React.useEffect(() => {
+    if (targetHost) setHostInput(targetHost);
+  }, [targetHost]);
+
+  React.useEffect(() => {
+    if (settings.mdnsHost) setMdnsInput(settings.mdnsHost);
+    if (settings.wifiSsid) setWifiSsidInput(settings.wifiSsid);
+    if (settings.pwmGpio !== undefined) setGpioInput(settings.pwmGpio);
+  }, [settings.mdnsHost, settings.wifiSsid, settings.pwmGpio]);
+
+  React.useEffect(() => {
+    if (curveMode !== undefined) setCurveInput(curveMode);
+  }, [curveMode]);
+
   // OTA state
   const [otaFile, setOtaFile] = useState<File | null>(null);
   const [otaProgress, setOtaProgress] = useState<number | null>(null);

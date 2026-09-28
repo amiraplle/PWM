@@ -320,10 +320,7 @@ void loadSettingsFromNVS() {
   prefs.end();
 }
 
-void saveSettingsToNVSDebounced() {
-  if (!nvsDirty) return;
-  if (millis() - lastStateChangeMillis < NVS_DEBOUNCE_MS) return;
-
+void saveSettingsToNVSNow() {
   prefs.begin("cob_pwm", false);
   prefs.putBool("power", state.powerOn);
   prefs.putUChar("bright", state.brightness);
@@ -340,8 +337,16 @@ void saveSettingsToNVSDebounced() {
     prefs.putString("pass", "");
   }
   prefs.end();
-
   nvsDirty = false;
+  Serial.printf("[NVS] Stored in flash: SSID='%s', PIN=%d, CURVE=%d, HOST='%s'\n",
+    state.wifiSsid, state.pwmPin, state.curveMode, state.mdnsHost);
+}
+
+void saveSettingsToNVSDebounced() {
+  if (!nvsDirty) return;
+  if (millis() - lastStateChangeMillis < NVS_DEBOUNCE_MS) return;
+
+  saveSettingsToNVSNow();
 }
 
 // -------------------------------------------------------------
@@ -698,12 +703,15 @@ void handlePostSettings() {
     }
   }
 
-  lastStateChangeMillis = 0; // Commit immediately
-  saveSettingsToNVSDebounced();
+  // Commit immediately to flash memory so reboot never loses settings
+  saveSettingsToNVSNow();
   handleGetState();
 }
 
 void handlePostReboot() {
+  if (nvsDirty) {
+    saveSettingsToNVSNow();
+  }
   sendJsonResponse(200, "{\"success\":true,\"message\":\"ESP32 rebooting in 1s...\"}");
   delay(1000);
   ESP.restart();
@@ -932,7 +940,7 @@ input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearanc
       <label class="field-label">mDNS Hostname</label>
       <input type="text" id="sysHost" class="field-input" placeholder="pwm">
     </div>
-    <button type="button" class="btn btn-primary" onclick="saveSystem()">💾 Save Hardware Settings</button>
+    <button type="button" id="btnSaveSys" class="btn btn-primary" onclick="saveSystem()">💾 Save Hardware Settings</button>
   </div>
   <div class="card">
     <div class="card-header"><span class="card-label">OTA Firmware Update</span></div>
@@ -972,69 +980,110 @@ input[type=range]::-webkit-slider-thumb{width:28px;height:28px;-webkit-appearanc
 <script>
 let curState = { power:false, brightness:75, softness:400, frequency:5000 };
 let hasAutoSwitched = false;
+let isDragging = false;
+let isFetching = false;
+let sysFieldsLoaded = false;
 
 const showTab = (tab) => {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('view-' + tab).classList.add('active');
-  document.getElementById('btn-tab-' + tab).classList.add('active');
+  const targetView = document.getElementById('view-' + tab);
+  const targetBtn = document.getElementById('btn-tab-' + tab);
+  if (targetView) targetView.classList.add('active');
+  if (targetBtn) targetBtn.classList.add('active');
 };
 
 const fetchState = () => {
-  fetch('/api/state').then(r => r.json()).then(d => {
-    curState = d;
-    document.getElementById('pwrBtn').className = 'power-btn ' + (d.power ? 'active' : '');
-    document.getElementById('bVal').innerText = d.brightness + '%';
-    document.getElementById('bSlider').value = d.brightness;
-    document.getElementById('sVal').innerText = d.softness + 'ms';
-    document.getElementById('sSlider').value = d.softness;
-    document.getElementById('fVal').innerText = d.frequency + ' Hz';
-    if (d.settings) {
-      document.getElementById('ipBadge').innerText = d.settings.ip || 'ESP32-C3';
-      const isAP = d.settings.isAP === true || (d.settings.ip && d.settings.ip.indexOf('192.168.4.') === 0);
-      const dot = document.getElementById('dot');
-      const banner = document.getElementById('wifiBanner');
-      if (isAP) {
-        dot.className = 'status-dot ap';
-        banner.className = 'alert-banner';
-        banner.innerText = '⚠️ Setup Hotspot Active (192.168.4.1). Connect to your 2.4 GHz home Wi-Fi below.';
-        if (!hasAutoSwitched) {
-          hasAutoSwitched = true;
-          showTab('wifi');
+  if (isFetching || isDragging || document.hidden) return;
+  const activeTag = document.activeElement ? document.activeElement.tagName : '';
+  const isEditing = activeTag === 'INPUT' || activeTag === 'SELECT';
+
+  isFetching = true;
+  fetch('/api/state')
+    .then(r => r.json())
+    .then(d => {
+      isFetching = false;
+      curState = d;
+
+      const pwrBtn = document.getElementById('pwrBtn');
+      if (pwrBtn) pwrBtn.className = 'power-btn ' + (d.power ? 'active' : '');
+
+      if (!isDragging) {
+        document.getElementById('bVal').innerText = d.brightness + '%';
+        document.getElementById('bSlider').value = d.brightness;
+        document.getElementById('sVal').innerText = d.softness + 'ms';
+        document.getElementById('sSlider').value = d.softness;
+      }
+      document.getElementById('fVal').innerText = d.frequency + ' Hz';
+
+      if (d.settings) {
+        document.getElementById('ipBadge').innerText = d.settings.ip || 'ESP32-C3';
+        const isAP = d.settings.isAP === true || (d.settings.ip && d.settings.ip.indexOf('192.168.4.') === 0);
+        const dot = document.getElementById('dot');
+        const banner = document.getElementById('wifiBanner');
+        if (isAP) {
+          dot.className = 'status-dot ap';
+          banner.className = 'alert-banner';
+          banner.innerText = '⚠️ Setup Hotspot Active (192.168.4.1). Connect to your 2.4 GHz home Wi-Fi below.';
+          if (!hasAutoSwitched) {
+            hasAutoSwitched = true;
+            showTab('wifi');
+          }
+        } else {
+          dot.className = 'status-dot';
+          banner.className = 'alert-banner success';
+          banner.innerText = 'Connected to Home Wi-Fi: ' + (d.settings.wifiSsid || '') + ' (' + d.settings.ip + ')';
         }
-      } else {
-        dot.className = 'status-dot';
-        banner.className = 'alert-banner success';
-        banner.innerText = 'Connected to Home Wi-Fi: ' + (d.settings.wifiSsid || '') + ' (' + d.settings.ip + ')';
+
+        // Initialize system fields only once on load so user edits are NEVER clobbered
+        if (!sysFieldsLoaded && !isEditing) {
+          sysFieldsLoaded = true;
+          if (d.settings.wifiSsid) document.getElementById('wfSsid').value = d.settings.wifiSsid;
+          if (d.settings.pwmGpio !== undefined) document.getElementById('sysPin').value = d.settings.pwmGpio;
+          if (d.curveMode !== undefined) document.getElementById('sysCurve').value = d.curveMode;
+          if (d.settings.mdnsHost) document.getElementById('sysHost').value = d.settings.mdnsHost;
+        }
       }
-      if (d.settings.wifiSsid && !document.getElementById('wfSsid').value) {
-        document.getElementById('wfSsid').value = d.settings.wifiSsid;
-      }
-      if (d.settings.pwmGpio !== undefined) {
-        document.getElementById('sysPin').value = d.settings.pwmGpio;
-      }
-      if (d.curveMode !== undefined) {
-        document.getElementById('sysCurve').value = d.curveMode;
-      }
-      if (d.settings.mdnsHost) {
-        document.getElementById('sysHost').value = d.settings.mdnsHost;
-      }
-    }
-  }).catch(() => {});
+    })
+    .catch(() => {
+      isFetching = false;
+    });
 };
 
 const togglePower = () => {
-  fetch('/api/power', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ power:!curState.power }) }).then(fetchState);
+  const nextPower = !curState.power;
+  curState.power = nextPower;
+  const pwrBtn = document.getElementById('pwrBtn');
+  if (pwrBtn) pwrBtn.className = 'power-btn ' + (nextPower ? 'active' : '');
+
+  fetch('/api/power', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ power: nextPower })
+  }).then(r => r.json()).then(d => { curState = d; }).catch(() => {});
 };
 
-let bTimer;
+let bTimer = null;
+let pendingBrightness = null;
 const onBright = (v) => {
   v = Math.max(1, Math.min(100, parseInt(v, 10)));
   document.getElementById('bVal').innerText = v + '%';
-  clearTimeout(bTimer);
+  pendingBrightness = v;
+  isDragging = true;
+
+  if (bTimer) clearTimeout(bTimer);
   bTimer = setTimeout(() => {
-    fetch('/api/brightness', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ brightness:v }) });
-  }, 60);
+    isDragging = false;
+    if (pendingBrightness !== null) {
+      const sendVal = pendingBrightness;
+      pendingBrightness = null;
+      fetch('/api/brightness', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ brightness: sendVal })
+      }).catch(() => {});
+    }
+  }, 120);
 };
 
 const setBright = (v) => {
@@ -1042,14 +1091,27 @@ const setBright = (v) => {
   onBright(v);
 };
 
-let sTimer;
+let sTimer = null;
+let pendingSoftness = null;
 const onSoft = (v) => {
   v = Math.max(0, Math.min(3000, parseInt(v, 10)));
   document.getElementById('sVal').innerText = v + 'ms';
-  clearTimeout(sTimer);
+  pendingSoftness = v;
+  isDragging = true;
+
+  if (sTimer) clearTimeout(sTimer);
   sTimer = setTimeout(() => {
-    fetch('/api/softness', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ softness:v }) });
-  }, 80);
+    isDragging = false;
+    if (pendingSoftness !== null) {
+      const sendVal = pendingSoftness;
+      pendingSoftness = null;
+      fetch('/api/softness', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ softness: sendVal })
+      }).catch(() => {});
+    }
+  }, 120);
 };
 
 const setSoft = (v) => {
@@ -1059,7 +1121,11 @@ const setSoft = (v) => {
 
 const setFreq = (v) => {
   document.getElementById('fVal').innerText = v + ' Hz';
-  fetch('/api/frequency', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ frequency:v }) }).then(fetchState);
+  fetch('/api/frequency', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ frequency: v })
+  }).catch(() => {});
 };
 
 const togglePass = () => {
@@ -1101,32 +1167,45 @@ const saveWifi = () => {
   const modal = document.getElementById('modal');
   const modalMsg = document.getElementById('modalMsg');
   modal.classList.add('active');
-  modalMsg.innerText = 'Saving credentials to flash and connecting to "' + ssid + '"... Reconnect your phone/PC to "' + ssid + '" and visit http://pwm.local';
+  modalMsg.innerText = 'Saving credentials to flash...';
 
   fetch('/api/settings', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ wifiSsid:ssid, wifiPass:pass })
-  }).then(() => {
-    setTimeout(() => {
-      fetch('/api/reboot', { method:'POST' }).catch(() => {});
-    }, 600);
-  }).catch(() => {});
+    body:JSON.stringify({ wifiSsid: ssid, wifiPass: pass })
+  })
+  .then(r => r.json())
+  .then(() => {
+    modalMsg.innerText = 'Credentials saved to flash! Connecting to "' + ssid + '"... Reconnect to "' + ssid + '" and open http://pwm.local';
+    return fetch('/api/reboot', { method:'POST' });
+  })
+  .catch(err => {
+    modalMsg.innerText = 'Error saving credentials: ' + err.message;
+  });
 };
 
 const saveSystem = () => {
   const pin = parseInt(document.getElementById('sysPin').value, 10);
   const curve = parseInt(document.getElementById('sysCurve').value, 10);
   const host = document.getElementById('sysHost').value.trim() || 'pwm';
+  const btn = document.getElementById('btnSaveSys');
+  if (btn) { btn.innerText = 'Saving...'; btn.disabled = true; }
+
   fetch('/api/settings', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ pwmGpio:pin, curveMode:curve, mdnsHost:host })
-  }).then(() => {
-    alert('Hardware settings saved to flash successfully!');
-    fetchState();
-  }).catch(() => {
-    alert('Failed to save settings.');
+    body:JSON.stringify({ pwmGpio: pin, curveMode: curve, mdnsHost: host })
+  })
+  .then(r => r.json())
+  .then(() => {
+    if (btn) {
+      btn.innerText = '✅ Saved to Flash!';
+      setTimeout(() => { btn.innerText = '💾 Save Hardware Settings'; btn.disabled = false; }, 2000);
+    }
+  })
+  .catch(err => {
+    alert('Failed to save settings: ' + err.message);
+    if (btn) { btn.innerText = '💾 Save Hardware Settings'; btn.disabled = false; }
   });
 };
 
@@ -1175,7 +1254,7 @@ const uploadOta = () => {
 };
 
 fetchState();
-setInterval(fetchState, 2000);
+setInterval(fetchState, 4000);
 </script>
 </body>
 </html>

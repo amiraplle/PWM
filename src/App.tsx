@@ -51,10 +51,14 @@ export default function App() {
     }
   }, []);
 
-  // Initial sync & interval polling
+  // Initial sync & interval polling (only when page is visible)
   useEffect(() => {
     syncState();
-    const interval = setInterval(syncState, 2500);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        syncState();
+      }
+    }, 4000);
     return () => clearInterval(interval);
   }, [syncState]);
 
